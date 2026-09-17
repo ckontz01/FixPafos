@@ -1,0 +1,15 @@
+.git
+.next
+node_modules
+.env*
+*.private.*
+docs
+outputs
+test-results
+playwright-report
+tests
+scripts/verify-live.mjs
+.hallmark
+AGENTS.md
+CLAUDE.md
+*.tsbuildinfo
