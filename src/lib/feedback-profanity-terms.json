@@ -1,0 +1,38 @@
+{
+  "english": [
+    ["fuck", "fucks", "fucked", "fucking", "fucker", "fuckers"],
+    ["shit", "shits", "shitty", "bullshit"],
+    ["bitch", "bitches", "bitching"],
+    ["asshole", "assholes"],
+    ["bastard", "bastards"],
+    ["cunt", "cunts"],
+    ["motherfucker", "motherfuckers"],
+    ["wanker", "wankers"],
+    ["prick", "pricks"],
+    ["douchebag", "douchebags"]
+  ],
+  "greek": [
+    ["μαλάκας", "μαλάκα", "μαλάκες", "malakas", "malaka", "malakes"],
+    ["γαμήσου", "γαμιέσαι", "gamisou", "gamiesai"],
+    ["σκατά", "σκατό", "skata", "skato"],
+    ["πούτσα", "πούτσο", "πούτσες", "poutsa", "poutso", "poutses"],
+    ["μουνί", "μουνιά", "mouni", "mounia"],
+    ["πούστης", "πούστη", "πούστηδες", "poustis", "pousti", "poustides"],
+    ["αρχίδι", "αρχίδια", "arxidi", "arxidia", "arhidi", "arhidia"],
+    ["καριόλης", "καριόλα", "kariolis", "kariola"],
+    ["κωλόπαιδο", "κωλόπαιδα", "kolopaido", "kolopaida", "kwlopaido", "kwlopaida"],
+    ["γαμώτο", "gamoto"]
+  ],
+  "french": [
+    ["merde", "merdes"],
+    ["putain", "putains"],
+    ["connard", "connards"],
+    ["connasse", "connasses"],
+    ["salope", "salopes"],
+    ["enfoiré", "enfoirée", "enfoirés", "enfoirées"],
+    ["bâtard", "bâtarde", "bâtards", "bâtardes"],
+    ["pute", "putes"],
+    ["enculé", "enculée", "enculés", "enculées"],
+    ["bordel", "bordels"]
+  ]
+}
