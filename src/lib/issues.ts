@@ -49,6 +49,8 @@ export type Reply = {
   author: string;
   message: string;
   createdAt: number;
+  verifiedDepartmentId?: string;
+  kind?: "resolution";
 };
 export type Issue = {
   id: string;
@@ -60,6 +62,9 @@ export type Issue = {
   createdAt: number;
   seconds: number;
   replies: Reply[];
+  status?: "open" | "resolved";
+  resolution?: { departmentId: string; at: number };
+  photo?: { status: "pending" | "approved" | "rejected"; url?: string };
 };
 export type QuarantineItem = {
   id: string;

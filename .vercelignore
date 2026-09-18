@@ -9,6 +9,8 @@ test-results
 playwright-report
 tests
 scripts/verify-live.mjs
+scripts/verify-team-photos.mjs
+scripts/provision-teams.ts
 .hallmark
 AGENTS.md
 CLAUDE.md

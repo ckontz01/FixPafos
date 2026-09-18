@@ -16,7 +16,23 @@ The original community board's multilingual profanity dictionary and filter are 
 
 The original public flag-and-remove behavior is intentionally retained: any visitor may flag and remove a published issue and its replies. The UI explicitly confirms this irreversible action. This is community moderation, not an authenticated government case-management system.
 
-## Department assignment
+## Team replies and resolution
+
+Each directory department has a separate password. Run `node --env-file=.env.local --import tsx scripts/provision-teams.ts` after migration to provision missing departments. This writes passwords only to ignored `docs/team-access.private.txt`; distribute them privately to authorized representatives. Existing credentials are never overwritten by this script. The badge confirms use of the department's platform credential, not independent verification of government employment.
+
+Passwords are stored as salted scrypt hashes. Verification creates a random, database-backed eight-hour session in an HttpOnly, SameSite=Strict cookie (Secure over HTTPS). Five login attempts per IP per 15 minutes are allowed. Only the department assigned to a report can post verified updates or resolve it. Resolution requires an update and saves the status and verified reply atomically. Ordinary replies cannot set verified metadata. All reply text uses the existing moderation pipeline; a blocked resolution update does not change the issue status. Resolved reports stay visible to everyone, with check-mark pins and an optional status filter.
+
+To revoke team access, delete that department's rows from `pafos_team_sessions`. To rotate its password, replace its scrypt hash and revoke its sessions; keep replacement plaintext only in the ignored access file.
+
+## Photos
+
+One optional JPEG, PNG or WebP photo can accompany a report (4 MB, 25 megapixels maximum). The server decodes and re-encodes the image, removes metadata including GPS, and resizes it to at most 1600 pixels. Original filenames and bytes are not retained. The dedicated **private** Vercel Blob store `pafoslive-photos` is connected using `BLOB_READ_WRITE_TOKEN`. Never switch it to public access.
+
+Photos start in manual review at `/moderation`. A moderator must view and approve the photo before it can appear publicly. Text moderation is unchanged and independent: both the report and photo must be approved for the image to be served. Rejecting a photo or removing its report makes the public photo endpoint return 404. The endpoint checks database permissions on every request and sends no-store responses. Private moderator previews use authenticated POST requests, with no passwords in URLs. Rejected images remain private for review.
+
+`node --env-file=.env.local scripts/verify-team-photos.mjs` exercises uploads, moderation, team authorization, verified replies and resolution through real browsers and APIs. It creates and removes only uniquely named QA fixtures. Set `TEST_BASE_URL=https://pafoslive.vercel.app` to verify this project's deployment.
+
+## Assignment details
 
 DeepSeek selects from a fixed service directory, with validated output and a human-review route for uncertain cases. Assignment runs after moderation and before publication, including moderator releases. A failed assignment does not publish an unassigned report. The selected department is a suggestion, not a dispatch or confirmation that an authority accepted a case. Reports are never emailed or transmitted to a government service automatically.
 

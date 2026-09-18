@@ -21,6 +21,7 @@ import {
   RefreshCw,
   Search,
   ThumbsUp,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import {
@@ -31,6 +32,8 @@ import {
   type IssueLocation,
 } from "@/lib/issues";
 import { departmentFor } from "@/lib/departments";
+import TeamActions from "./team-actions";
+import PhotoPicker from "./photo-picker";
 const IssueMap = dynamic(() => import("./issue-map"), {
   ssr: false,
   loading: () => (
@@ -43,8 +46,12 @@ async function request<T>(url: string, data?: unknown): Promise<T> {
   const response = await fetch(url, {
     method: data ? "POST" : "GET",
     cache: "no-store",
-    headers: data ? { "Content-Type": "application/json" } : undefined,
-    body: data ? JSON.stringify(data) : undefined,
+    headers:
+      data && !(data instanceof FormData)
+        ? { "Content-Type": "application/json" }
+        : undefined,
+    body:
+      data instanceof FormData ? data : data ? JSON.stringify(data) : undefined,
   });
   const result = response.status === 204 ? null : await response.json();
   if (!response.ok)
@@ -52,6 +59,8 @@ async function request<T>(url: string, data?: unknown): Promise<T> {
   return result as T;
 }
 export default function Board() {
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
   const [posts, setPosts] = useState<Issue[]>([]),
     [seconded, setSeconded] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false),
@@ -78,11 +87,12 @@ export default function Board() {
       posts.filter(
         (p) =>
           (filter === "all" || p.category === filter) &&
+          (statusFilter === "all" || (p.status ?? "open") === statusFilter) &&
           `${p.message} ${p.location.label} ${departmentFor(p.assignment.departmentId).name}`
             .toLowerCase()
             .includes(query.toLowerCase()),
       ),
-    [posts, filter, query],
+    [posts, filter, query, statusFilter],
   );
   const refresh = useCallback(async () => {
     try {
@@ -152,17 +162,23 @@ export default function Board() {
     }
     setBusy(true);
     try {
-      const result = await request<{ post: Issue }>("/api/issues", {
+      const report = {
         author,
         message,
         category,
         location: { ...draft, label: locationLabel },
-      });
+      };
+      const payload = new FormData();
+      payload.append("report", JSON.stringify(report));
+      if (photo) payload.append("photo", photo);
+      const result = await request<{ post: Issue }>("/api/issues", payload);
       setPosts((p) => [result.post, ...p]);
       setLoaded(true);
       setSelectedId(result.post.id);
       setMode("board");
       setMessage("");
+      setPhoto(null);
+      setStatusFilter("all");
       setDraft(undefined);
       setLocationLabel("");
       setFilter("all");
@@ -333,6 +349,7 @@ export default function Board() {
                   />
                   <span className="field-count">{message.length}/500</span>
                 </label>
+                <PhotoPicker file={photo} onChange={setPhoto} disabled={busy} />
                 <p className="privacy-note">
                   Your name, report and location will be public. Leave out phone
                   numbers, private addresses and other personal details.
@@ -386,6 +403,32 @@ export default function Board() {
                   </div>
                 )}
                 <p className="issue-message">{selected.message}</p>
+                <span
+                  className={`status-badge ${selected.status === "resolved" ? "resolved" : ""}`}
+                >
+                  {selected.status === "resolved" ? "✓ Resolved" : "Open"}
+                </span>
+                {selected.resolution && (
+                  <p className="fine-print">
+                    Marked resolved by{" "}
+                    {departmentFor(selected.resolution.departmentId).name} ·{" "}
+                    {timeAgo(selected.resolution.at)}
+                  </p>
+                )}
+                {selected.photo?.url && (
+                  // The authorized photo endpoint must be checked on every request.
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    className="issue-photo"
+                    src={selected.photo.url}
+                    alt={`Reported issue at ${selected.location.label}`}
+                  />
+                )}
+                {selected.photo?.status === "pending" && (
+                  <p className="photo-status">
+                    Photo awaiting moderator review.
+                  </p>
+                )}
                 <div className="assignment-block">
                   <span className="small-label">
                     Suggested responsible service
@@ -430,6 +473,11 @@ export default function Board() {
                     <Flag size={17} />
                   </button>
                 </div>
+                <TeamActions
+                  key={selected.id}
+                  issue={selected}
+                  onUpdate={refresh}
+                />
                 <div className="replies">
                   <h2>
                     Community replies <span>{selected.replies.length}</span>
@@ -442,6 +490,15 @@ export default function Board() {
                   {selected.replies.map((r) => (
                     <article className="reply" key={r.id}>
                       <strong>{r.author}</strong>
+                      {r.verifiedDepartmentId && (
+                        <span
+                          className="verified-badge"
+                          title="Posted using this department’s PafosLive password"
+                        >
+                          <ShieldCheck size={14} /> Verified team
+                          {r.kind === "resolution" ? " · Resolved" : ""}
+                        </span>
+                      )}
                       <span>{timeAgo(r.createdAt)}</span>
                       <p>{r.message}</p>
                     </article>
@@ -499,6 +556,17 @@ export default function Board() {
                   <br />
                   Add your report. Help your neighbours.
                 </p>
+                <label className="status-filter">
+                  Report status
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="all">All reports</option>
+                    <option value="open">Open</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                </label>
                 <div className="search-field">
                   <Search size={18} />
                   <input
@@ -589,6 +657,7 @@ export default function Board() {
                       posts.length
                         ? () => {
                             setFilter("all");
+                            setStatusFilter("all");
                             setQuery("");
                           }
                         : startReport
@@ -617,6 +686,11 @@ export default function Board() {
                         <time>{timeAgo(p.createdAt)}</time>
                       </div>
                       <h2>{p.location.label}</h2>
+                      {p.status === "resolved" && (
+                        <span className="status-badge resolved">
+                          ✓ Resolved
+                        </span>
+                      )}
                       <p>{p.message}</p>
                       <div className="issue-row-bottom">
                         <span>

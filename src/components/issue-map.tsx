@@ -127,12 +127,13 @@ export default function IssueMap(props: Props) {
       group.forEach((issue, index) => {
         const button = document.createElement("button");
         const category = categories[issue.category];
-        button.className = `issue-pin${props.selected?.id === issue.id ? " selected" : ""}`;
+        button.className = `issue-pin${props.selected?.id === issue.id ? " selected" : ""}${issue.status === "resolved" ? " resolved" : ""}`;
         button.dataset.category = issue.category;
-        button.textContent = category.symbol;
+        button.textContent =
+          issue.status === "resolved" ? "✓" : category.symbol;
         button.setAttribute(
           "aria-label",
-          `${category.label}: ${issue.message}`,
+          `${issue.status === "resolved" ? "Resolved · " : ""}${category.label}: ${issue.message}`,
         );
         button.title = `${category.label} · ${issue.location.label}`;
         button.addEventListener("click", (e) => {

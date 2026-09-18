@@ -17,13 +17,28 @@ export async function listIssues(voterId?: string) {
   const sql = db();
   const rows = await sql`
     SELECT i.data,
+      p.status AS photo_status,
       (SELECT count(*)::int FROM pafos_votes v WHERE v.issue_id=i.id) AS seconds,
       EXISTS(SELECT 1 FROM pafos_votes v WHERE v.issue_id=i.id AND v.voter_id=${voterId ?? ""}) AS seconded,
       COALESCE((SELECT jsonb_agg(r.data ORDER BY r.created_at) FROM pafos_replies r WHERE r.issue_id=i.id),'[]'::jsonb) AS replies
-    FROM pafos_issues i ORDER BY i.created_at DESC`;
+    FROM pafos_issues i LEFT JOIN pafos_photos p ON p.issue_id=i.id ORDER BY i.created_at DESC`;
   return {
     posts: rows.map(
-      (r) => ({ ...r.data, seconds: r.seconds, replies: r.replies }) as Issue,
+      (r) =>
+        ({
+          ...r.data,
+          status: r.data.status ?? "open",
+          seconds: r.seconds,
+          replies: r.replies,
+          photo: r.photo_status
+            ? {
+                status: r.photo_status,
+                ...(r.photo_status === "approved"
+                  ? { url: `/api/photos/${r.data.id}` }
+                  : {}),
+              }
+            : undefined,
+        }) as Issue,
     ),
     seconded: rows.filter((r) => r.seconded).map((r) => r.data.id as string),
   };

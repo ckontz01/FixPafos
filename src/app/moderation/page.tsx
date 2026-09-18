@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import type { QuarantineItem } from "@/lib/issues";
+import PhotoModeration from "@/components/photo-moderation";
 export default function Moderation() {
   const [password, setPassword] = useState(""),
     [items, setItems] = useState<QuarantineItem[] | null>(null),
@@ -100,6 +101,7 @@ export default function Moderation() {
               <p>Blocked reports and replies will appear here.</p>
             </div>
           )}
+          <PhotoModeration password={password} />
           {items.map((i) => (
             <article className="quarantine-item" key={i.id}>
               <span className="small-label">

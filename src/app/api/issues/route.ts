@@ -1,8 +1,9 @@
-import { insertIssue, listIssues, quarantine } from "@/lib/db";
+import { listIssues } from "@/lib/db";
 import { parseIssue, validId } from "@/lib/validation";
 import { moderateFeedback } from "@/lib/feedback-moderation";
 import { assignIssue } from "@/lib/assignment";
-import { body, handle, json, limited } from "@/lib/http";
+import { handle, json, limited } from "@/lib/http";
+import { PhotoInputError, reportInput, saveReport } from "@/lib/photos";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 export function GET(request: Request) {
@@ -13,7 +14,19 @@ export function GET(request: Request) {
 }
 export function POST(request: Request) {
   return handle(request, async () => {
-    const issue = parseIssue(await body(request));
+    if (await limited(request, "report-upload", 10))
+      return json(
+        { error: "Too many submissions. Please wait a minute." },
+        429,
+      );
+    let submission;
+    try {
+      submission = await reportInput(request);
+    } catch (e) {
+      if (e instanceof PhotoInputError) return json({ error: e.message }, 400);
+      throw e;
+    }
+    const issue = parseIssue(submission.input);
     if (!issue)
       return json(
         {
@@ -33,7 +46,7 @@ export function POST(request: Request) {
       locationLabel: issue.location.label,
     });
     if (decision.status === "blocked") {
-      await quarantine(issue, decision);
+      await saveReport(issue, submission.photo, decision);
       return json(
         {
           error:
@@ -61,7 +74,7 @@ export function POST(request: Request) {
       );
     issue.assignment = assignment;
     issue.category = assignment.category;
-    await insertIssue(issue);
+    await saveReport(issue, submission.photo);
     return json({ post: issue }, 201);
   });
 }

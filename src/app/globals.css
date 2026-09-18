@@ -30,6 +30,108 @@
   --category-other: oklch(44% 0.015 240);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
+.team-panel {
+  border-block: 1px solid var(--rule);
+  padding: 18px 0;
+  margin: 22px 0;
+}
+.team-panel summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+.team-panel summary::after {
+  content: "+";
+  margin-left: auto;
+}
+.team-panel[open] summary::after {
+  content: "−";
+}
+.team-panel summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 5px;
+}
+.team-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0;
+}
+.verified-badge,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.status-badge {
+  margin-bottom: 10px;
+  background: var(--surface);
+  color: var(--secondary);
+}
+.status-badge.resolved {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.reply .verified-badge {
+  float: none;
+  display: flex;
+  width: fit-content;
+  color: var(--accent);
+  font-size: 12px;
+  margin: 5px 0;
+}
+.issue-photo {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  background: var(--surface);
+  border-radius: 6px;
+  margin: 14px 0;
+}
+.photo-picker input {
+  max-width: 100%;
+  padding: 10px;
+}
+.photo-status {
+  background: var(--surface);
+  padding: 10px 12px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.issue-pin.resolved {
+  background: var(--accent);
+  border-color: var(--accent-ink);
+}
+.status-filter {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  margin: 18px 0 12px;
+}
+.status-filter select {
+  width: 100%;
+  padding: 7px;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  border-radius: 4px;
+}
+.photo-review {
+  border-block: 1px solid var(--rule);
+  padding: 18px 0;
+  margin: 24px 0;
+}
 * {
   box-sizing: border-box;
 }

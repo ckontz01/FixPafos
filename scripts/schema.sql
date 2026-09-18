@@ -24,3 +24,16 @@ CREATE TABLE IF NOT EXISTS pafos_rate_limits (
 CREATE INDEX IF NOT EXISTS pafos_issues_created ON pafos_issues(created_at DESC);
 CREATE INDEX IF NOT EXISTS pafos_replies_issue ON pafos_replies(issue_id, created_at);
 CREATE INDEX IF NOT EXISTS pafos_quarantine_pending ON pafos_quarantine(status, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS pafos_team_credentials (
+ department_id text PRIMARY KEY, password_hash text NOT NULL
+);
+CREATE TABLE IF NOT EXISTS pafos_team_sessions (
+ token_hash text PRIMARY KEY, department_id text NOT NULL REFERENCES pafos_team_credentials(department_id) ON DELETE CASCADE,
+ expires_at bigint NOT NULL
+);
+CREATE TABLE IF NOT EXISTS pafos_photos (
+ issue_id text PRIMARY KEY, blob_path text NOT NULL,
+ status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+ created_at bigint NOT NULL, reviewed_at bigint
+);
