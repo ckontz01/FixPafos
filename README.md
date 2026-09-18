@@ -34,6 +34,8 @@ Photos start in manual review at `/moderation`. A moderator must view and approv
 
 ## Assignment details
 
+The report form offers **I am not sure**. This is stored as the original reported category and sent to DeepSeek as no category hint, including when a quarantined report is later approved. DeepSeek must return a real category before publication. Cards and issue details label DeepSeek-classified reports **Auto-classified by DeepSeek**; filters and map pins use the resulting category.
+
 DeepSeek selects from a fixed service directory, with validated output and a human-review route for uncertain cases. Assignment runs after moderation and before publication, including moderator releases. A failed assignment does not publish an unassigned report. The selected department is a suggestion, not a dispatch or confirmation that an authority accepted a case. Reports are never emailed or transmitted to a government service automatically.
 
 Directory sources, checked 18 September 2026:

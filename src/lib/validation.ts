@@ -28,7 +28,7 @@ export function parseIssue(value: unknown): Issue | null {
     !message ||
     !loc ||
     typeof category !== "string" ||
-    !Object.hasOwn(categories, category)
+    (category !== "unsure" && !Object.hasOwn(categories, category))
   )
     return null;
   const label = text(loc.label, 100),
@@ -46,12 +46,15 @@ export function parseIssue(value: unknown): Issue | null {
     author,
     message,
     location: { label, longitude, latitude },
-    category: category as Category,
+    // A valid internal placeholder until DeepSeek supplies the public category.
+    // reportedCategory preserves the absence of a user hint through quarantine.
+    category: category === "unsure" ? "other" : (category as Category),
+    reportedCategory: category as Issue["reportedCategory"],
     assignment: {
       departmentId: "review",
       confidence: "low",
       source: "manual_review",
-      category: category as Category,
+      category: category === "unsure" ? "other" : (category as Category),
     },
     createdAt: Date.now(),
     seconds: 0,

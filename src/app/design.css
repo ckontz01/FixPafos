@@ -26,6 +26,20 @@
   --radius-card: 16px;
   --radius-control: 10px;
 }
+.classification-note {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 6px 0 12px;
+}
+.report-form > .classification-note {
+  margin-top: -8px;
+  padding: 12px;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
 body {
   background: var(--paper);
   font-size: 14px;

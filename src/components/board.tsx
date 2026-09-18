@@ -28,6 +28,7 @@ import {
   categories,
   timeAgo,
   type Category,
+  type ReportedCategory,
   type Issue,
   type IssueLocation,
 } from "@/lib/issues";
@@ -74,7 +75,7 @@ export default function Board() {
   const [selectedId, setSelectedId] = useState<string>(),
     [mode, setMode] = useState<"board" | "report" | "services">("board");
   const [draft, setDraft] = useState<IssueLocation>(),
-    [category, setCategory] = useState<Category>("roads");
+    [category, setCategory] = useState<ReportedCategory>("roads");
   const [author, setAuthor] = useState(""),
     [message, setMessage] = useState(""),
     [locationLabel, setLocationLabel] = useState("");
@@ -326,8 +327,17 @@ export default function Board() {
                   Issue type
                   <select
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as Category)}
+                    aria-label="Issue type"
+                    onChange={(e) =>
+                      setCategory(e.target.value as ReportedCategory)
+                    }
+                    aria-describedby={
+                      category === "unsure"
+                        ? "auto-classification-help"
+                        : undefined
+                    }
                   >
+                    <option value="unsure">I am not sure</option>
                     {Object.entries(categories).map(([id, c]) => (
                       <option key={id} value={id}>
                         {c.label}
@@ -335,6 +345,16 @@ export default function Board() {
                     ))}
                   </select>
                 </label>
+                {category === "unsure" && (
+                  <p
+                    id="auto-classification-help"
+                    className="classification-note"
+                  >
+                    DeepSeek will automatically classify the issue type and
+                    suggest the responsible service from your description and
+                    location.
+                  </p>
+                )}
                 <div className={`location-step ${draft ? "complete" : ""}`}>
                   <MapPin size={20} />
                   <div>
@@ -424,6 +444,11 @@ export default function Board() {
                   <CategoryIcon category={selected.category} />
                   {categories[selected.category].label}
                 </div>
+                {selected.assignment.source === "deepseek" && (
+                  <span className="classification-note">
+                    Auto-classified by DeepSeek
+                  </span>
+                )}
                 <h1>{selected.location.label}</h1>
                 <div className="report-author">
                   <span className="author-avatar">
@@ -756,6 +781,11 @@ export default function Board() {
                         <time>{timeAgo(p.createdAt)}</time>
                       </div>
                       <h2>{p.location.label}</h2>
+                      {p.assignment.source === "deepseek" && (
+                        <span className="classification-note">
+                          Auto-classified by DeepSeek
+                        </span>
+                      )}
                       {p.status !== "resolved" && (
                         <span className="status-badge">Open</span>
                       )}

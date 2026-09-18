@@ -57,6 +57,29 @@ test("length and blank field limits", () => {
     }),
   );
 });
+test("unsure submissions preserve no-hint provenance and cannot spoof a classification", () => {
+  const issue = parseIssue({
+    ...input,
+    category: "unsure",
+    reportedCategory: "roads",
+    assignment: { source: "deepseek", category: "roads" },
+  });
+  assert.equal(issue?.reportedCategory, "unsure");
+  assert.equal(issue?.category, "other");
+  assert.equal(issue?.assignment.source, "manual_review");
+  assert.equal(
+    parseIssue({ ...input, reportedCategory: "unsure" })?.reportedCategory,
+    "roads",
+  );
+  assert.equal(
+    parseAssignment({
+      category: "unsure",
+      departmentId: "review",
+      confidence: "low",
+    }),
+    null,
+  );
+});
 test("routing only accepts the department directory and sends low confidence to human review", () => {
   assert.equal(
     parseAssignment({

@@ -33,6 +33,7 @@ export const categories = {
   other: { label: "Other local issue", symbol: "O", color: "--category-other" },
 } as const;
 export type Category = keyof typeof categories;
+export type ReportedCategory = Category | "unsure";
 export type IssueLocation = {
   longitude: number;
   latitude: number;
@@ -58,6 +59,7 @@ export type Issue = {
   message: string;
   location: IssueLocation;
   category: Category;
+  reportedCategory?: ReportedCategory;
   assignment: Assignment;
   createdAt: number;
   seconds: number;
