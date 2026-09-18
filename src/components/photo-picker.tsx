@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 export default function PhotoPicker({
   file,
   onChange,
@@ -10,6 +10,7 @@ export default function PhotoPicker({
   disabled: boolean;
 }) {
   const [preview, setPreview] = useState("");
+  const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   useEffect(() => {
     if (!file) return;
@@ -22,7 +23,7 @@ export default function PhotoPicker({
       <label>
         Photo (optional)
         <input
-          key={file ? "selected" : "empty"}
+          ref={input}
           type="file"
           accept="image/jpeg,image/png,image/webp"
           disabled={disabled}
@@ -58,7 +59,10 @@ export default function PhotoPicker({
             className="text-link"
             type="button"
             disabled={disabled}
-            onClick={() => onChange(null)}
+            onClick={() => {
+              onChange(null);
+              if (input.current) input.current.value = "";
+            }}
           >
             Remove photo
           </button>

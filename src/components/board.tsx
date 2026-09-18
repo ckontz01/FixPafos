@@ -34,6 +34,9 @@ import {
 import { departmentFor } from "@/lib/departments";
 import TeamActions from "./team-actions";
 import PhotoPicker from "./photo-picker";
+import DepartmentIdentity from "./department-identity";
+import CategoryIcon from "./category-icon";
+import ServicesDirectory from "./services-directory";
 const IssueMap = dynamic(() => import("./issue-map"), {
   ssr: false,
   loading: () => (
@@ -69,7 +72,7 @@ export default function Board() {
   const [filter, setFilter] = useState<Category | "all">("all"),
     [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string>(),
-    [mode, setMode] = useState<"board" | "report">("board");
+    [mode, setMode] = useState<"board" | "report" | "services">("board");
   const [draft, setDraft] = useState<IssueLocation>(),
     [category, setCategory] = useState<Category>("roads");
   const [author, setAuthor] = useState(""),
@@ -146,6 +149,8 @@ export default function Board() {
     setFormError("");
     setNotice("");
     history.replaceState(null, "", "/");
+    if (window.innerWidth < 960)
+      sidebar.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
   function back() {
     setMode("board");
@@ -248,14 +253,41 @@ export default function Board() {
     <div className="app-shell">
       <header className="site-header">
         <Link href="/" className="wordmark" aria-label="PafosLive home">
-          <MapPin size={25} strokeWidth={2.3} />
+          <span className="brand-symbol">
+            <MapPin size={23} strokeWidth={2.1} />
+          </span>
           <span>
             Pafos<span className="wordmark-light">Live</span>
           </span>
         </Link>
-        <div className="header-caption">
-          A shared view of a better neighbourhood
-        </div>
+        <nav className="app-nav" aria-label="Main navigation">
+          <button
+            aria-current={mode !== "services" ? "page" : undefined}
+            onClick={back}
+            disabled={busy}
+          >
+            Community map
+          </button>
+          <button
+            aria-current={mode === "services" ? "page" : undefined}
+            onClick={() => {
+              setMode("services");
+              setSelectedId(undefined);
+              history.replaceState(null, "", "/");
+              if (window.innerWidth < 960)
+                sidebar.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+            }}
+            disabled={busy}
+          >
+            Local services
+          </button>
+        </nav>
+        <span className="header-location">
+          <span className="live-dot" /> Pafos, Cyprus
+        </span>
         <button className="button" onClick={startReport} disabled={busy}>
           <Plus size={18} />
           <span>Report an issue</span>
@@ -275,7 +307,9 @@ export default function Board() {
           ref={sidebar}
           aria-label="Community board"
         >
-          {mode === "report" ? (
+          {mode === "services" ? (
+            <ServicesDirectory />
+          ) : mode === "report" ? (
             <>
               <div className="panel-heading">
                 <button className="back-link" onClick={back} disabled={busy}>
@@ -387,13 +421,21 @@ export default function Board() {
                   className="category-label"
                   data-category={selected.category}
                 >
-                  <span className="category-dot" />
+                  <CategoryIcon category={selected.category} />
                   {categories[selected.category].label}
                 </div>
                 <h1>{selected.location.label}</h1>
-                <span className="muted">
-                  {selected.author} · {timeAgo(selected.createdAt)}
-                </span>
+                <div className="report-author">
+                  <span className="author-avatar">
+                    {selected.author.slice(0, 1).toUpperCase()}
+                  </span>
+                  <span>
+                    <strong>{selected.author}</strong>
+                    <span>
+                      Reported {timeAgo(selected.createdAt).toLowerCase()}
+                    </span>
+                  </span>
+                </div>
               </div>
               <div className="issue-detail">
                 {notice && (
@@ -433,9 +475,7 @@ export default function Board() {
                   <span className="small-label">
                     Suggested responsible service
                   </span>
-                  <h2>
-                    {departmentFor(selected.assignment.departmentId).name}
-                  </h2>
+                  <DepartmentIdentity id={selected.assignment.departmentId} />
                   <p>
                     {selected.assignment.confidence === "low"
                       ? "Responsibility is unclear. A person should review the routing."
@@ -489,7 +529,14 @@ export default function Board() {
                   )}
                   {selected.replies.map((r) => (
                     <article className="reply" key={r.id}>
-                      <strong>{r.author}</strong>
+                      {r.verifiedDepartmentId ? (
+                        <DepartmentIdentity
+                          id={r.verifiedDepartmentId}
+                          compact
+                        />
+                      ) : (
+                        <strong>{r.author}</strong>
+                      )}
                       {r.verifiedDepartmentId && (
                         <span
                           className="verified-badge"
@@ -542,20 +589,43 @@ export default function Board() {
             </>
           ) : (
             <>
-              <div className="panel-heading">
+              <div className="panel-heading overview-heading">
                 <div className="board-kicker">
-                  <span className="live-dot" /> Public community board
+                  <span className="live-dot" /> YOUR NEIGHBOURHOOD, CONNECTED
                 </div>
                 <h1>
-                  Small issues.
+                  A better Pafos
                   <br />
-                  Shared attention.
+                  starts here.
                 </h1>
                 <p>
-                  See what needs fixing around Pafos.
+                  Spot an issue. Share it on the map.
                   <br />
-                  Add your report. Help your neighbours.
+                  Follow the progress together.
                 </p>
+                <div
+                  className="board-counts"
+                  aria-label="Community report totals"
+                >
+                  <span>
+                    <strong>
+                      {loaded
+                        ? posts.filter((p) => p.status !== "resolved").length
+                        : "—"}
+                    </strong>{" "}
+                    {posts.filter((p) => p.status !== "resolved").length === 1
+                      ? "open report"
+                      : "open reports"}
+                  </span>
+                  <span>
+                    <strong>
+                      {loaded
+                        ? posts.filter((p) => p.status === "resolved").length
+                        : "—"}
+                    </strong>{" "}
+                    resolved
+                  </span>
+                </div>
                 <label className="status-filter">
                   Report status
                   <select
@@ -585,7 +655,7 @@ export default function Board() {
                   )}
                 </div>
                 <label className="filter-label">
-                  Show
+                  Issue type
                   <select
                     aria-label="Filter issue type"
                     value={filter}
@@ -680,24 +750,31 @@ export default function Board() {
                           className="category-label"
                           data-category={p.category}
                         >
-                          <span className="category-dot" />
+                          <CategoryIcon category={p.category} size={16} />
                           {categories[p.category].label}
                         </span>
                         <time>{timeAgo(p.createdAt)}</time>
                       </div>
                       <h2>{p.location.label}</h2>
+                      {p.status !== "resolved" && (
+                        <span className="status-badge">Open</span>
+                      )}
                       {p.status === "resolved" && (
                         <span className="status-badge resolved">
                           ✓ Resolved
                         </span>
                       )}
                       <p>{p.message}</p>
+                      <DepartmentIdentity
+                        id={p.assignment.departmentId}
+                        compact
+                      />
                       <div className="issue-row-bottom">
                         <span>
                           <ThumbsUp size={14} />
-                          {p.seconds}
+                          {p.seconds} supporting
                           <MessageSquare size={14} />
-                          {p.replies.length}
+                          {p.replies.length} replies
                         </span>
                         <ChevronRight size={18} />
                       </div>
@@ -706,11 +783,16 @@ export default function Board() {
                 </div>
               )}
               <div className="board-explainer">
-                <strong>One map, open to everyone.</strong>
-                <p>
-                  Approved reports appear here for all visitors. The board
-                  refreshes every 15 seconds.
-                </p>
+                <span className="explainer-mark">
+                  <MapPin size={21} />
+                </span>
+                <div>
+                  <strong>A small report. A shared improvement.</strong>
+                  <p>
+                    From a broken streetlight to a blocked drain, help put your
+                    neighbourhood’s needs on the map.
+                  </p>
+                </div>
               </div>
             </>
           )}

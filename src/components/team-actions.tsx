@@ -3,6 +3,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { ShieldCheck, Check } from "lucide-react";
 import { departmentFor } from "@/lib/departments";
 import type { Issue } from "@/lib/issues";
+import DepartmentIdentity from "./department-identity";
 export default function TeamActions({
   issue,
   onUpdate,
@@ -98,11 +99,9 @@ export default function TeamActions({
   return (
     <details className="team-panel">
       <summary>
-        <ShieldCheck size={18} /> Responsible team · reply or resolve
+        <ShieldCheck size={18} /> Team access
       </summary>
-      <p className="fine-print">
-        {departmentFor(issue.assignment.departmentId).name}
-      </p>
+      <DepartmentIdentity id={issue.assignment.departmentId} compact />
       {department === issue.assignment.departmentId ? (
         <>
           <span className="verified-badge">

@@ -29,6 +29,8 @@ const visitor = await browser.newContext({
 const wrongTeam = await browser.newContext();
 const page = await context.newPage(),
   other = await visitor.newPage();
+page.setDefaultTimeout(20000);
+other.setDefaultTimeout(20000);
 const errors = [];
 page.on("pageerror", (e) => errors.push(e.message));
 let issueId;
@@ -275,6 +277,22 @@ try {
   console.log(
     "PASS rejected photos become private; expired sessions denied; no browser runtime errors",
   );
+} catch (error) {
+  await page.screenshot({
+    path: "outputs/team-flow-failure.png",
+    fullPage: true,
+  });
+  console.log(
+    "Browser validation:",
+    await page
+      .locator("input,textarea,select")
+      .evaluateAll((elements) =>
+        elements
+          .filter((el) => el.willValidate && !el.validity.valid)
+          .map((el) => ({ type: el.type, reason: el.validationMessage })),
+      ),
+  );
+  throw error;
 } finally {
   const photos =
     await sql`SELECT blob_path FROM pafos_photos WHERE issue_id IN (SELECT id FROM pafos_issues WHERE data->>'author'=${author})`;

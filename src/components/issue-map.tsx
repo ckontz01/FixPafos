@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
-import { LocateFixed, MapPin, RotateCcw } from "lucide-react";
+import { Check, LocateFixed, MapPin, RotateCcw } from "lucide-react";
+import CategoryIcon from "./category-icon";
 import {
   categories,
   PAFOS_CENTER,
@@ -9,6 +10,7 @@ import {
   withinPafos,
   type Issue,
   type IssueLocation,
+  type Category,
 } from "@/lib/issues";
 type Props = {
   issues: Issue[];
@@ -19,6 +21,7 @@ type Props = {
   onPick: (location: IssueLocation) => void;
 };
 export default function IssueMap(props: Props) {
+  const markerIcons = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null),
     latest = useRef(props);
@@ -131,6 +134,16 @@ export default function IssueMap(props: Props) {
         button.dataset.category = issue.category;
         button.textContent =
           issue.status === "resolved" ? "✓" : category.symbol;
+        const icon = markerIcons.current?.querySelector(
+          `[data-marker-icon="${issue.status === "resolved" ? "resolved" : issue.category}"] svg`,
+        );
+        if (icon) button.replaceChildren(icon.cloneNode(true));
+        if (props.selected?.id === issue.id) {
+          const caption = document.createElement("span");
+          caption.className = "pin-caption";
+          caption.textContent = issue.location.label;
+          button.append(caption);
+        }
         button.setAttribute(
           "aria-label",
           `${issue.status === "resolved" ? "Resolved · " : ""}${category.label}: ${issue.message}`,
@@ -220,6 +233,16 @@ export default function IssueMap(props: Props) {
       aria-label="Public issue map of Pafos"
     >
       <div ref={host} className="map-canvas" />
+      <div ref={markerIcons} hidden aria-hidden="true">
+        {Object.keys(categories).map((category) => (
+          <span key={category} data-marker-icon={category}>
+            <CategoryIcon category={category as Category} size={19} />
+          </span>
+        ))}
+        <span data-marker-icon="resolved">
+          <Check size={19} />
+        </span>
+      </div>
       <div className="map-heading">
         <MapPin size={18} />
         <div>

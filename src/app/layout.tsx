@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Space_Grotesk } from "next/font/google";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
+import "./design.css";
 const body = Geist({
   subsets: ["latin"],
   variable: "--font-body",

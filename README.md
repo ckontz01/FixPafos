@@ -49,4 +49,6 @@ Created from a small, read-only selection of moderation source files. No origina
 
 ## Map
 
+The interface design is documented in `design.md`, with shared visual styles in `src/app/design.css`. The Local services directory, report cards, assignment panel and verified replies show official parent-authority logos. The eight services share two authority identities: Pafos Municipality and EOA Pafos. Original asset URLs and provenance are recorded in `public/authorities/SOURCES.md`; these marks identify the authorities and do not imply endorsement.
+
 MapLibre renders standard OpenStreetMap tiles with visible attribution. Report text is rendered as React text or DOM `textContent`, never raw HTML. Pins and the board share the same filtered dataset. Reports at identical coordinates fan out in screen pixels for selection. Low-volume public OSM tiles are appropriate for initial use; provision a dedicated tile provider before heavy traffic, following [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/).

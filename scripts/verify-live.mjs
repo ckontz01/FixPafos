@@ -74,7 +74,10 @@ try {
     .waitFor();
   await page.screenshot({ path: "outputs/desktop-report.png", fullPage: true });
   await other.goto(base);
-  await other.locator(".issue-pin").filter({ hasText: "R" }).first().waitFor();
+  await other
+    .getByRole("button", { name: /Roads & pavements: A large pothole/ })
+    .first()
+    .waitFor();
   assert.ok((await api("/api/issues")).data.posts.some((p) => p.id === id));
   assert.ok(
     await other
