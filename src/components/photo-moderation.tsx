@@ -1,8 +1,11 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import type { PhotoReview } from "@/lib/photo-review";
 type Photo = {
   id: string;
   status: string;
+  aiReview?: PhotoReview | null;
+  reviewedBy?: string | null;
   report: { message: string; location: { label: string } };
 };
 function ReviewPhoto({
@@ -46,6 +49,15 @@ function ReviewPhoto({
       <span className="small-label">Photo · {photo.status}</span>
       <h3>{photo.report.location.label}</h3>
       <p>{photo.report.message}</p>
+      <p className="fine-print">
+        {photo.reviewedBy === "deepseek" ? "Auto-approved by DeepSeek. " :
+          photo.status !== "pending" ? "Reviewed by a moderator. " : "Needs moderator review. "}
+        {photo.aiReview ? <>
+          {photo.aiReview.source === "deepseek" &&
+            `AI assessment: ${photo.aiReview.category} (${photo.aiReview.confidence} confidence). `}
+          {photo.aiReview.reason}
+        </> : "No automatic assessment is available for this photo."}
+      </p>
       {preview ? (
         // Authenticated private preview uses a short-lived browser object URL.
         // eslint-disable-next-line @next/next/no-img-element
@@ -112,9 +124,11 @@ export default function PhotoModeration({ password }: { password: string }) {
     <section className="photo-review">
       <h2>Photo review</h2>
       <p>
-        Check for inappropriate content and personal information before
-        publishing. Approving a photo only makes it public when its report is
-        also published.
+        DeepSeek automatically approves clearly relevant, safe photos.
+        Uncertain, irrelevant, inappropriate or privacy-sensitive photos and
+        failed AI checks stay private here, with pending reviews first.
+        Check the image before approving. Photos only become public when their
+        report is also published. You can reject an auto-approved photo below.
       </p>
       <button className="button secondary" onClick={() => void refresh()}>
         Refresh photos

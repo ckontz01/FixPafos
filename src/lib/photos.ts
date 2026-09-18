@@ -3,6 +3,7 @@ import { put, get, del } from "@vercel/blob";
 import { db } from "./db";
 import { body } from "./http";
 import type { Issue } from "./issues";
+import { manualPhotoReview, reviewPhoto } from "./photo-review";
 export const MAX_PHOTO_BYTES = 4 * 1024 * 1024;
 export class PhotoInputError extends Error {}
 export async function reportInput(
@@ -66,6 +67,10 @@ export async function saveReport(
   photo?: Buffer,
   blocked?: { source: string; category: string },
 ) {
+  const review = photo
+    ? blocked ? manualPhotoReview("text_review") : await reviewPhoto(photo, issue)
+    : null;
+  const status = review?.autoApproved ? "approved" : "pending";
   const uploaded = photo
     ? await put(`issues/${issue.id}.jpg`, photo, {
         access: "private",
@@ -82,7 +87,7 @@ export async function saveReport(
         await tx`INSERT INTO pafos_issues(id,data,created_at) VALUES(${issue.id},${tx.json(issue)},${issue.createdAt})`;
       }
       if (uploaded)
-        await tx`INSERT INTO pafos_photos(issue_id,blob_path,created_at) VALUES(${issue.id},${uploaded.pathname},${issue.createdAt})`;
+        await tx`INSERT INTO pafos_photos(issue_id,blob_path,created_at,status,ai_review,reviewed_at,reviewed_by) VALUES(${issue.id},${uploaded.pathname},${issue.createdAt},${status},${tx.json(review!)},${review?.autoApproved ? review.checkedAt : null},${review?.autoApproved ? "deepseek" : null})`;
     });
   } catch (error) {
     if (uploaded)
@@ -91,7 +96,10 @@ export async function saveReport(
       );
     throw error;
   }
-  if (uploaded) issue.photo = { status: "pending" };
+  if (uploaded) issue.photo = {
+    status,
+    ...(status === "approved" ? { url: `/api/photos/${issue.id}` } : {}),
+  };
 }
 export async function photoResponse(path: string) {
   const blob = await get(path, { access: "private" });

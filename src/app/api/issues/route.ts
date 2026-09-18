@@ -5,7 +5,7 @@ import { assignIssue } from "@/lib/assignment";
 import { handle, json, limited } from "@/lib/http";
 import { PhotoInputError, reportInput, saveReport } from "@/lib/photos";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
+export const maxDuration = 120;
 export function GET(request: Request) {
   return handle(request, async () => {
     const voterId = new URL(request.url).searchParams.get("voterId");

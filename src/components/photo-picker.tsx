@@ -69,8 +69,10 @@ export default function PhotoPicker({
         </>
       )}
       <p className="fine-print">
-        JPEG, PNG or WebP, up to 4 MB. Photos become public after moderator
-        approval. Avoid faces, number plates and personal information.
+        JPEG, PNG or WebP, up to 4 MB. DeepSeek checks your photo against the
+        report. Clear, relevant and safe photos are approved automatically;
+        others stay private for moderator review. Avoid faces, number plates
+        and personal information.
       </p>
       {error && (
         <p className="error-message" role="alert">

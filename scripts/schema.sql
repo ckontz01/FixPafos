@@ -37,3 +37,5 @@ CREATE TABLE IF NOT EXISTS pafos_photos (
  status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
  created_at bigint NOT NULL, reviewed_at bigint
 );
+ALTER TABLE pafos_photos ADD COLUMN IF NOT EXISTS ai_review jsonb;
+ALTER TABLE pafos_photos ADD COLUMN IF NOT EXISTS reviewed_by text;

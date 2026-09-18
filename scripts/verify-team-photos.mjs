@@ -67,7 +67,7 @@ try {
   await page.getByAltText("Selected photo preview").waitFor();
   const response = page.waitForResponse(
     (r) => r.url().endsWith("/api/issues") && r.request().method() === "POST",
-    { timeout: 90000 },
+    { timeout: 150000 },
   );
   await page
     .getByRole("button", { name: "Publish report", exact: true })
@@ -83,10 +83,12 @@ try {
     404,
   );
   const [stored] =
-    await sql`SELECT blob_path FROM pafos_photos WHERE issue_id=${issueId}`;
+    await sql`SELECT blob_path,ai_review FROM pafos_photos WHERE issue_id=${issueId}`;
   assert.ok(stored.blob_path);
+  assert.equal(stored.ai_review.source, "deepseek");
+  assert.equal(stored.ai_review.autoApproved, false);
   console.log(
-    "PASS browser upload → DeepSeek routing → private photo pending moderation",
+    "PASS browser upload → DeepSeek routing and vision → unclear photo stays private for moderation",
   );
   assert.equal(
     (
@@ -198,7 +200,7 @@ try {
   );
   await other.goto(`${base}/?issue=${issueId}`);
   await other.locator(".status-badge.resolved").waitFor();
-  await other.locator(".issue-pin.resolved").waitFor();
+  await other.locator(".issue-pin.resolved").filter({ hasText: author }).waitFor();
   assert.ok(
     await other.getByText("Verified team · Resolved", { exact: true }).count(),
   );
