@@ -9,12 +9,33 @@ import type {
 import { FLAG_HIDE_THRESHOLD } from "./issues";
 
 let client: ReturnType<typeof postgres> | undefined;
+
+/**
+ * Certificate verification is required for every connection that leaves the
+ * machine. It is relaxed only for an explicit loopback address, which is the
+ * local development database and cannot be a hosted instance -- so a
+ * misconfigured production URL can never silently downgrade its transport.
+ */
+function sslMode(url: string): "verify-full" | false {
+  try {
+    const { hostname } = new URL(url);
+    return hostname === "127.0.0.1" || hostname === "localhost" || hostname === "::1"
+      ? false
+      : "verify-full";
+  } catch {
+    return "verify-full";
+  }
+}
+
 export function db() {
-  if (!process.env.DATABASE_URL)
-    throw new Error("PafosLive database is not configured");
-  client ??= postgres(process.env.DATABASE_URL, {
-    ssl: "verify-full",
-    max: 3,
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("PafosLive database is not configured");
+  const loopback = sslMode(url) === false;
+  client ??= postgres(url, {
+    ssl: sslMode(url),
+    // The local development database serves a single connection; hosted
+    // Postgres is pooled normally.
+    max: loopback ? 1 : 3,
     idle_timeout: 20,
     connect_timeout: 10,
     prepare: false,

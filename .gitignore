@@ -12,3 +12,4 @@ outputs/
 .env*
 !/.env.example
 next-env.d.ts
+.pglite/

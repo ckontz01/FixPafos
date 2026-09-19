@@ -6,6 +6,32 @@
    * to Noto Sans per glyph via its unicode-range. Order matters. */
   --font-stack-body: var(--font-body), var(--font-coverage), sans-serif;
   --font-stack-display: var(--font-display), var(--font-coverage), sans-serif;
+  /* --- Chart tokens -------------------------------------------------------
+   * Every value below was produced by the palette validator against the panel
+   * surface, not chosen by eye. Re-run it before changing any of them.
+   *
+   *   magnitude      single series, no categorical gate needed (10.03:1)
+   *   two-series     CVD dE 9.4, normal-vision dE 24.6, both >= 3:1  [PASS]
+   *   severity ramp  one hue, monotone L, adjacent dL >= 0.06        [PASS]
+   *   heat ramp      one hue, monotone L, light end 2.02:1           [PASS]
+   *
+   * The app has no dark mode, so these are stepped for the light surface only.
+   */
+  --chart-magnitude: oklch(37% 0.072 165);
+  --chart-resolved: oklch(52% 0.12 165);
+  --chart-open: oklch(66% 0.15 62);
+  --chart-severity-low: oklch(68% 0.081 55);
+  --chart-severity-medium: oklch(59% 0.115 55);
+  --chart-severity-high: oklch(50% 0.149 55);
+  --chart-severity-critical: oklch(41% 0.172 55);
+  --chart-heat-1: oklch(77% 0.035 165);
+  --chart-heat-2: oklch(70% 0.05 165);
+  --chart-heat-3: oklch(63% 0.062 165);
+  --chart-heat-4: oklch(56% 0.07 165);
+  --chart-heat-5: oklch(49% 0.078 165);
+  /* Recessive: one step off the surface, hairline, solid. */
+  --chart-grid: oklch(91% 0.008 100);
+  --chart-track: oklch(94% 0.006 100);
   --paper: oklch(97.2% 0.009 90);
   --panel: oklch(99.7% 0.002 100);
   --surface: oklch(94.4% 0.012 95);
@@ -900,6 +926,284 @@ label {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* --- Insights dashboard ---------------------------------------------------- */
+.insights-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-lg) var(--space-2xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+.insights-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.insights-title {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  color: var(--accent);
+}
+.insights-title h1 {
+  font-family: var(--font-stack-display);
+  font-size: clamp(26px, 4vw, 34px);
+  letter-spacing: -0.05em;
+  color: var(--ink);
+  margin: 0 0 6px;
+}
+.insights-title p {
+  color: var(--secondary);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 62ch;
+}
+.demo-banner {
+  padding: 12px 14px;
+  border-radius: var(--radius-control);
+  background: var(--warm-surface);
+  color: var(--warm-ink);
+  font-size: 13px;
+  font-weight: 550;
+}
+.insights-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+}
+.insights-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.insights-filters select {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--font-stack-body);
+  font-size: 13px;
+  min-height: 40px;
+  padding: 0 8px;
+  width: 100%;
+}
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-md);
+}
+.stat-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--space-lg);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+.stat-value {
+  font-family: var(--font-stack-display);
+  font-size: 29px;
+  font-weight: 550;
+  letter-spacing: -0.05em;
+  color: var(--ink);
+}
+.stat-hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+.chart-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-md);
+  /* Cards size to their own content; stretching leaves dead space under the
+   * shorter charts. */
+  align-items: start;
+}
+.chart-card {
+  margin: 0;
+  padding: var(--space-lg);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0;
+}
+.chart-card figcaption h2 {
+  font-family: var(--font-stack-display);
+  font-size: 15px;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  margin: 0;
+}
+.chart-card figcaption p {
+  margin: 5px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.chart-empty {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 0;
+  padding: var(--space-lg) 0;
+}
+.chart-empty.standalone {
+  text-align: center;
+  padding: var(--space-2xl);
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+}
+/* Bars: capped thickness, 4px rounded data-end, square at the baseline. */
+.bar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.bar-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 9.5rem) 1fr auto;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.bar-label {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--secondary);
+  /* Two lines rather than an ellipsis: several names share a long prefix, and
+   * truncating them all to it makes the rows indistinguishable. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.bar-track {
+  background: var(--chart-track);
+  border-radius: 0 4px 4px 0;
+  height: 14px;
+  min-width: 0;
+}
+.bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+}
+.bar-value {
+  font-family: var(--font-stack-display);
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.chart-legend {
+  display: flex;
+  gap: var(--space-md);
+  font-size: 11px;
+  color: var(--secondary);
+}
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chart-legend i {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+.line-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+.line-chart .axis-text {
+  font-family: var(--font-stack-body);
+  font-size: 10px;
+  fill: var(--muted);
+}
+.chart-readout {
+  min-height: 1.2em;
+  margin: 0;
+  font-size: 11px;
+  color: var(--secondary);
+  font-variant-numeric: tabular-nums;
+}
+.chart-table-toggle {
+  align-self: flex-start;
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 550;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.chart-table-wrap {
+  overflow-x: auto;
+}
+.chart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.chart-table th,
+.chart-table td {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+.chart-table th {
+  color: var(--muted);
+  font-weight: 550;
+}
+.chart-table td {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.insights-method {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 70ch;
+  margin: 0;
+}
+@media (max-width: 30rem) {
+  .bar-list li {
+    grid-template-columns: minmax(0, 7.5rem) 1fr auto;
+  }
+  .insights-page {
+    padding-inline: var(--space-md);
   }
 }
 

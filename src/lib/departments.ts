@@ -71,6 +71,16 @@ export function departmentFor(id: string) {
   return departments[id as DepartmentId] ?? departments.review;
 }
 
+/**
+ * The part of a department name that distinguishes it from its siblings.
+ * Full names all begin with the same authority ("Pafos Municipality - ..."),
+ * which in a narrow chart column truncates every row to the identical prefix.
+ */
+export function departmentShortName(fullName: string) {
+  const parts = fullName.split(" · ");
+  return parts[parts.length - 1] ?? fullName;
+}
+
 /** Translation key for a department's display name, falling back to general enquiries. */
 export function departmentKey(id: string): MessageKey {
   return `department.${isDepartmentId(id) ? id : "review"}` as MessageKey;
