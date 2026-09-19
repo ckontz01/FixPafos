@@ -1,56 +1,180 @@
 # PafosLive
 
-An independent, map-first community board for municipal issues in Pafos, Cyprus. Opens directly on Pafos with public report pins, category/search filters, support votes and moderated replies. No climate hazard layers, datasets or CYENS deployment configuration.
+A map-first civic reporting platform for Pafos, Cyprus. Citizens report everyday
+municipal problems in **Greek, English or Russian**; the platform moderates the
+submission, classifies it, suggests the responsible service, estimates how
+urgent it is, detects when several people are reporting the same physical issue,
+and publishes it to a shared public map. Municipal staff reply with a verified
+badge, mark issues resolved, and read an operational dashboard.
 
-## Development
+It is an independent community platform. It suggests a responsible service; it
+does not dispatch work and never transmits anything to an authority
+automatically.
 
-Requires Node.js 24. Run `npm ci`, configure `.env.local` using `.env.example`, run `npm run db:migrate` against the dedicated PafosLive database, then `npm run dev`. The local port is 3107. Run `npm test`, `npm run lint` and `npm run build` before deployment.
+- **Architecture and report lifecycle:** [`docs/architecture.md`](docs/architecture.md)
+- **Responsible AI, privacy and security:** [`docs/responsible-ai.md`](docs/responsible-ai.md)
+- **AI evaluation:** [`evaluation/README.md`](evaluation/README.md)
+- **Interface design system:** [`design.md`](design.md)
 
-## Storage and deployment
+## Running it
 
-Separate GitHub repository and Vercel project named `pafoslive`. A new Neon Postgres resource `pafoslive-db` is provisioned via Vercel Marketplace. Database migrations are explicit, not run during Vercel builds. Never connect this project to the CYENS database or repo. All tables use the `pafos_` prefix. Browser storage contains only a pseudonymous support-voter identifier; reports are stored on the shared server and visible without login. Clients refresh every 15 seconds and upon returning to the tab.
+Requires Node.js 24.
 
-## Moderation
+```bash
+npm ci
 
-The original community board's multilingual profanity dictionary and filter are copied unchanged. DeepSeek moderation uses the same tool schema, categories, validation, timeout and retry policy; the prompt changes only the topic from climate impacts to municipal issues. Both reports and replies are moderated. Blocked content is privately quarantined. Provider outages fail closed with 503, and no unchecked content is published. Password-protected review is at `/moderation`. A fresh `FEEDBACK_ADMIN_PASSWORD` is required; there is no legacy/default password. Rate limits are persisted in Postgres for Vercel's distributed runtime: ten submissions/minute and five failed moderator logins/15 minutes.
+# Option A: a local database, no hosted instance needed.
+npm run dev:db                      # starts Postgres (PGlite) on 127.0.0.1:5433
+cp .env.example .env.local          # set DATABASE_URL to the printed value
+npm run seed:demo                   # realistic Pafos sample data
+npm run dev                         # http://localhost:3107
 
-The original public flag-and-remove behavior is intentionally retained: any visitor may flag and remove a published issue and its replies. The UI explicitly confirms this irreversible action. This is community moderation, not an authenticated government case-management system.
+# Option B: a provisioned Postgres.
+npm run db:migrate
+npm run dev
+```
 
-## Team replies and resolution
+The development database serves **one connection at a time**, so run the seed
+before starting the dev server rather than alongside it.
 
-Each directory department has a separate password. Run `node --env-file=.env.local --import tsx scripts/provision-teams.ts` after migration to provision missing departments. This writes passwords only to ignored `docs/team-access.private.txt`; distribute them privately to authorized representatives. Existing credentials are never overwritten by this script. The badge confirms use of the department's platform credential, not independent verification of government employment.
+Before deploying: `npm test`, `npm run lint`, `npm run build`.
 
-Passwords are stored as salted scrypt hashes. Verification creates a random, database-backed eight-hour session in an HttpOnly, SameSite=Strict cookie (Secure over HTTPS). Five login attempts per IP per 15 minutes are allowed. Only the department assigned to a report can post verified updates or resolve it. Resolution requires an update and saves the status and verified reply atomically. Ordinary replies cannot set verified metadata. All reply text uses the existing moderation pipeline; a blocked resolution update does not change the issue status. Resolved reports stay visible to everyone, with check-mark pins and an optional status filter.
+### Environment
 
-To revoke team access, delete that department's rows from `pafos_team_sessions`. To rotate its password, replace its scrypt hash and revoke its sessions; keep replacement plaintext only in the ignored access file.
+| Variable | Required | Purpose |
+|---|---|---|
+| `DATABASE_URL` | yes | Postgres connection string |
+| `DEEPSEEK_API_KEY` | yes | Moderation, classification, vision, duplicate adjudication |
+| `FEEDBACK_ADMIN_PASSWORD` | yes | Moderation queues and export |
+| `BLOB_READ_WRITE_TOKEN` | for photos | Private Vercel Blob store |
+| `DEMO_MODE` | no | Demonstration only; see below |
+| `DUPLICATE_RADIUS_METRES` | no | Default 100 |
+| `DUPLICATE_WINDOW_DAYS` | no | Default 120 |
+| `FLAG_HIDE_THRESHOLD` | no | Distinct flags before a report is hidden; default 3 |
 
-## Photos
+## What the AI does
 
-One optional JPEG, PNG or WebP photo can accompany a report (4 MB, 25 megapixels maximum). The server decodes and re-encodes the image, removes metadata including GPS, and resizes it to at most 1600 pixels. Original filenames and bytes are not retained. The dedicated **private** Vercel Blob store `pafoslive-photos` is connected using `BLOB_READ_WRITE_TOKEN`. Never switch it to public access.
+Six model-assisted steps, each with validated output and a human route:
 
-New photos are checked against the report using DeepSeek vision (`deepseek-flash`, optionally `DEEPSEEK_PHOTO_MODEL`) with the existing API key. Only a valid, high-confidence relevant assessment with safe content and no exposed personal information permits automatic approval. Uncertain, irrelevant, inappropriate and privacy-sensitive photos remain private for moderator review; timeouts, unavailable models and malformed responses also fail closed to this queue. Photos on text-quarantined reports go directly to manual review. Existing photos retain their current status. AI assessments and reasons are stored privately for moderators; these are suggestions, not proof of authenticity or location. Moderators can override automatic approvals. Text moderation is unchanged and independent: both the report and photo must be approved for the image to be served. Rejecting a photo or removing its report makes the public photo endpoint return 404. The endpoint checks database permissions on every request and sends no-store responses. Private moderator previews use authenticated POST requests, with no passwords in URLs. Rejected images remain private for review.
+1. **Moderation** of report and reply text, in any language. Fails closed.
+2. **Photo review**, comparing the image against the report. Only clearly
+   relevant, safe images auto-approve; everything else waits for a person.
+3. **Routing** to one of eight services from a fixed directory.
+4. **Category** classification, including when the reporter says "I am not sure".
+5. **Severity triage** — advisory only, must cite a reason from a closed list,
+   with a suggested response window that is fixed policy rather than a model
+   output.
+6. **Duplicate detection**, so forty reports of one pothole become one case with
+   forty supporters instead of forty cases.
 
-`node --env-file=.env.local scripts/verify-team-photos.mjs` exercises uploads, moderation, team authorization, verified replies and resolution through real browsers and APIs. It creates and removes only uniquely named QA fixtures. Set `TEST_BASE_URL=https://pafoslive.vercel.app` to verify this project's deployment.
+Duplicate detection is the part worth understanding. Citizens report the same
+pothole in Greek, Greeklish, English and Russian, and a keyword match fails
+immediately on that input. It runs three stages, cheapest first:
 
-## Assignment details
+1. a deterministic SQL prefilter on a bounding box, recency and visibility;
+2. a lexical layer that folds Greek, Greeklish and Cyrillic into one comparable
+   form — Greek text and its Greeklish transliteration normalise to identical
+   tokens and score **1.0**;
+3. model adjudication over the handful that survive, which is the only stage
+   that can tell a Russian and an English report describe one pothole. Those
+   score **0.0** lexically, which is exactly why the layer exists.
 
-The report form offers **I am not sure**. This is stored as the original reported category and sent to DeepSeek as no category hint, including when a quarantined report is later approved. DeepSeek must return a real category before publication. Cards and issue details label DeepSeek-classified reports **Auto-classified by DeepSeek**; filters and map pins use the resulting category.
+Nothing is merged away: a linked report keeps its own row, author and text, and
+a moderator can separate a wrong match.
 
-DeepSeek selects from a fixed service directory, with validated output and a human-review route for uncertain cases. Assignment runs after moderation and before publication, including moderator releases. A failed assignment does not publish an unassigned report. The selected department is a suggestion, not a dispatch or confirmation that an authority accepted a case. Reports are never emailed or transmitted to a government service automatically.
+## Proving it works
 
-Directory sources, checked 18 September 2026:
+`evaluation/` holds 120 labelled Pafos reports and a runner that executes the
+shipped classifier and scores it.
 
-- [Pafos Municipality services](https://pafos.org.cy/en/contact/)
-- [EOA Pafos sewerage and water complaints](https://eoap.org.cy/en/sewer-blockage-complaints/)
+```bash
+npm run evaluate                    # the shipped configuration
+npm run evaluate -- --compare       # compare prompt/model configurations
+npm run evaluate -- --limit 20      # a subset while iterating
+```
 
-The reporting area is a rectangular Pafos-area extent (32.32–32.53 E, 34.70–34.88 N), not a precise municipal boundary. Users must place an explicit location. The classifier is instructed to request review for neighbouring jurisdictions and ambiguous responsibility.
+The dataset covers Greek, Greeklish, English, Russian and mixed text, plus the
+inputs that break naive classifiers: vague reports, hints the reporter got
+wrong, private property, neighbouring municipalities, emergencies that must not
+be queued as ordinary reports, adversarial urgency words and prompt-injection
+attempts. Twenty-seven percent of cases are labelled as requiring a human.
 
-## Isolation
+Beyond accuracy it reports three things averages hide: **critical under-calls**,
+**missed escalations**, and **calibration** — whether low confidence really does
+mark the harder cases. The scoring functions are unit-tested against
+hand-computed values, the runner exits non-zero without an API key, and no
+results are committed, so a figure only exists if someone ran it.
 
-Created from a small, read-only selection of moderation source files. No original Git history, remotes, workflows, data, SQLite files, logos or deployment files are carried over. The existing DeepSeek credential is configured server-side for the requested LLM integration; no CYENS deployment settings are changed. The generated moderator credential and baseline integrity record remain in ignored `*.private.*` files locally. Never commit `.env.local` or private files.
+## Insights
 
-## Map
+`/insights` turns the board into something a municipality can act on: volumes,
+resolution rate, median and average resolution time, breakdowns by category,
+department, status and severity, a time series, geographic hotspots, recurring
+locations, duplicate cluster sizes, per-department response performance and
+seasonal pattern — each filterable.
 
-The interface design is documented in `design.md`, with shared visual styles in `src/app/design.css`. The Local services directory, report cards, assignment panel and verified replies show official parent-authority logos. The eight services share two authority identities: Pafos Municipality and EOA Pafos. Original asset URLs and provenance are recorded in `public/authorities/SOURCES.md`; these marks identify the authorities and do not imply endorsement.
+Every figure is computed from stored reports. An empty period reports "no data"
+rather than a fabricated zero, hidden reports are excluded so a withdrawn report
+cannot inflate the figures, and seeded demonstration rows are counted separately
+so the page says plainly when it is showing sample data.
 
-MapLibre renders standard OpenStreetMap tiles with visible attribution. Report text is rendered as React text or DOM `textContent`, never raw HTML. Pins and the board share the same filtered dataset. Reports at identical coordinates fan out in screen pixels for selection. Low-volume public OSM tiles are appropriate for initial use; provision a dedicated tile provider before heavy traffic, following [OSM tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
+Chart colour was produced by a palette validator rather than chosen by eye; the
+validated tokens and their scores are recorded in `src/app/design.css`.
+
+## Accessibility and offline use
+
+- Greek, English and Russian throughout, Greek first.
+- **Dictation** in the reader's own language, so a report can be spoken rather
+  than typed on a phone outdoors. The transcript is always reviewable and
+  editable; it is never submitted automatically.
+- **Offline reporting**: a failed submission is kept on the device, clearly
+  marked *not submitted yet*, and sent when a connection returns. It only leaves
+  the queue once the server has accepted it.
+- Installable as a PWA. The service worker caches only the application shell and
+  deliberately never caches API responses, so the board is never stale.
+- Skip link, semantic markup, visible focus, a table view behind every chart,
+  and status never carried by colour alone.
+
+## Moderation and safety
+
+- Text and photos are moderated before publication, failing closed.
+- **Flagging requests review; it does not delete.** One flag per person per
+  report. Reaching the threshold hides the report pending review; a moderator
+  restores it or confirms removal, and the row survives either way.
+- Department replies are authorised per request: only the assigned department
+  can post a verified update or resolve an issue.
+- Photos are re-encoded pixel-only, removing EXIF and GPS, and stored privately.
+- Rate limits are Postgres-backed so they hold across serverless instances.
+
+`DEMO_MODE=true` allows a deterministic keyword classifier to stand in when the
+model provider is unreachable, so a live demonstration survives a bad
+connection. Its output is stamped as a fallback, is always marked for human
+review, and is never presented as a model decision. Leave it unset in
+production, where an unavailable model correctly fails closed.
+
+## Municipal export
+
+Authorised staff can export a filtered CSV or a per-department digest. Both are
+files a person downloads, reads and forwards — nothing is emailed or dispatched
+by the platform, so no external communication happens without human approval.
+CSV cells neutralise leading `=`, `+` and `@` so report text cannot become a
+spreadsheet formula.
+
+## Verification scripts
+
+```bash
+node --env-file=.env.local scripts/verify-live.mjs
+node --env-file=.env.local scripts/verify-team-photos.mjs
+```
+
+These drive real browsers against a running deployment, exercising uploads,
+moderation, team authorization, verified replies and resolution. They create and
+remove only uniquely named fixtures. Set `TEST_BASE_URL` to target a deployment.
+
+## Attribution
+
+MapLibre renders OpenStreetMap tiles with visible attribution; the low-volume
+public tile service is appropriate for initial use, and a dedicated provider
+should be configured before heavy traffic. Official authority logos identify
+each service and do not imply endorsement or partnership; sources are recorded
+in `public/authorities/SOURCES.md`.

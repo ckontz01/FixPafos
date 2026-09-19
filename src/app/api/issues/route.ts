@@ -5,6 +5,7 @@ import { classifyIssue } from "@/lib/assignment";
 import { fail, handle, json, limited } from "@/lib/http";
 import { PhotoInputError, reportInput, saveReport } from "@/lib/photos";
 import { applyCluster, detectDuplicate } from "@/lib/duplicates";
+import { fallbackClassify } from "@/lib/fallback-classifier";
 import { db, type Sql } from "@/lib/db";
 import {
   categories,
@@ -114,7 +115,11 @@ export function POST(request: Request) {
     }
     if (decision.status === "unavailable")
       return fail("error.moderationUnavailable", 503);
-    const classification = await classifyIssue(issue);
+    // In production an unavailable model fails closed: an unrouted, untriaged
+    // report is not published. Demonstration mode is the only case where a
+    // deterministic keyword fallback stands in, and its output is stamped
+    // `source: "fallback"` so nothing ever presents it as a model decision.
+    const classification = (await classifyIssue(issue)) ?? fallbackClassify(issue);
     if (!classification) return fail("error.assignmentUnavailable", 503);
     issue.assignment = classification.assignment;
     issue.category = classification.assignment.category;

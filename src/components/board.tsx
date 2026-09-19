@@ -642,9 +642,11 @@ export default function Board() {
                   </span>
                   <DepartmentIdentity id={selected.assignment.departmentId} />
                   <p>
-                    {selected.assignment.confidence === "low"
-                      ? t("issue.assignmentLow")
-                      : t("issue.assignmentAuto")}
+                    {selected.assignment.source === "fallback"
+                      ? t("demo.aiUnavailable")
+                      : selected.assignment.confidence === "low"
+                        ? t("issue.assignmentLow")
+                        : t("issue.assignmentAuto")}
                   </p>
                   <a
                     className="text-link"
