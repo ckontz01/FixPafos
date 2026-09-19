@@ -48,6 +48,9 @@ const reports = [
   { m: "Huge pothole on Apostolou Pavlou near the bus stop. Cars swerve into the other lane.", a: "Marina", c: "roads", lat: 34.77295, lng: 32.42185, loc: "Apostolou Pavlou Avenue", age: 11, sev: "high", lang: "en", cluster: "pothole-apostolou" },
   { m: "Большая яма на проспекте Апостолу Павлу, очень опасно для скутеров.", a: "Дмитрий", c: "roads", lat: 34.77288, lng: 32.42175, loc: "Проспект Апостолу Павлу", age: 10, sev: "high", lang: "ru", cluster: "pothole-apostolou" },
   { m: "Same pothole still not fixed, it has got bigger after the rain.", a: "Andreas", c: "roads", lat: 34.7729, lng: 32.4219, loc: "Apostolou Pavlou Avenue", age: 6, sev: "high", lang: "en", cluster: "pothole-apostolou" },
+  // Left as a suggestion rather than a confirmed link, so the moderation queue
+  // demonstrates a real pending decision instead of appearing empty.
+  { m: "Broken drain cover right next to the pothole on Apostolou Pavlou.", a: "Kyriakos", c: "roads", lat: 34.77297, lng: 32.42193, loc: "Apostolou Pavlou Avenue", age: 3, sev: "medium", lang: "en", cluster: "pothole-apostolou", clusterStatus: "suggested" },
 
   // --- A recurring drain, reported repeatedly over months -------------------
   { m: "Φραγμένο φρεάτιο ομβρίων στην Οδό Ελλάδος, πλημμυρίζει με κάθε βροχή.", a: "Ελένη", c: "sewage", lat: 34.7745, lng: 32.4265, loc: "Οδός Ελλάδος", age: 140, sev: "medium", lang: "el", resolvedAfter: 96 },
@@ -153,11 +156,14 @@ function build(report) {
     issue.cluster = {
       clusterId,
       role: primary ? "primary" : "linked",
-      status: "confirmed",
-      confidence: "high",
-      score: 0.92,
+      status: report.clusterStatus ?? "confirmed",
+      confidence: report.clusterStatus === "suggested" ? "medium" : "high",
+      score: report.clusterStatus === "suggested" ? 0.58 : 0.92,
       distanceMetres: primary ? 0 : 9,
-      reason: "Seeded demonstration cluster: same physical issue.",
+      reason:
+        report.clusterStatus === "suggested"
+          ? "Very close to an existing pothole report, but it describes a different defect. Needs a person to decide."
+          : "Seeded demonstration cluster: same physical issue.",
       source: "lexical",
       decidedBy: "auto",
       at: createdAt,
