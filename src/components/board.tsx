@@ -42,6 +42,7 @@ import ServicesDirectory from "./services-directory";
 import LanguageSwitcher from "./language-switcher";
 import { useI18n } from "./i18n-provider";
 import { isMessageKey, type MessageKey } from "@/lib/i18n";
+import type { IssueCursor, IssuePage } from "@/lib/db";
 
 /** Typed translation keys for canonical category identifiers. */
 const categoryKey = (category: Category): MessageKey =>
@@ -114,41 +115,19 @@ export default function Board() {
   const [busy, setBusy] = useState(false),
     [reply, setReply] = useState(""),
     [formError, setFormError] = useState("");
+  const [cursor, setCursor] = useState<IssueCursor | null>(null),
+    [loadingMore, setLoadingMore] = useState(false),
+    [debouncedQuery, setDebouncedQuery] = useState("");
   const voterId = useRef(""),
     flagDialog = useRef<HTMLDialogElement>(null),
     sidebar = useRef<HTMLElement>(null);
-  const selected = posts.find((p) => p.id === selectedId);
-  const visible = useMemo(
-    () =>
-      posts.filter(
-        (p) =>
-          (filter === "all" || p.category === filter) &&
-          (statusFilter === "all" || (p.status ?? "open") === statusFilter) &&
-          `${p.message} ${p.location.label} ${t(departmentKey(p.assignment.departmentId))}`
-            .toLowerCase()
-            .includes(query.toLowerCase()),
-      ),
-    [posts, filter, query, statusFilter, t],
-  );
-  const openCount = useMemo(
-    () => posts.filter((p) => p.status !== "resolved").length,
-    [posts],
-  );
-  const resolvedCount = posts.length - openCount;
-  const refresh = useCallback(async () => {
-    try {
-      const result = await request<{ posts: Issue[]; seconded: string[] }>(
-        `/api/issues?voterId=${encodeURIComponent(voterId.current)}`,
-      );
-      setPosts(result.posts);
-      setSeconded(result.seconded);
-      setLoaded(true);
-      setError("");
-    } catch (e) {
-      setError(describe(e));
-    }
-  }, [describe]);
-  useEffect(() => {
+  /**
+   * Pseudonymous, browser-local identifier used only to keep one support vote
+   * and one flag per person. Created on first use so it never runs during
+   * server rendering, and regenerated per session when storage is unavailable.
+   */
+  const voterKey = useCallback(() => {
+    if (voterId.current) return voterId.current;
     try {
       voterId.current =
         localStorage.getItem("pafoslive-voter") || crypto.randomUUID();
@@ -156,9 +135,82 @@ export default function Board() {
     } catch {
       voterId.current = crypto.randomUUID();
     }
+    return voterId.current;
+  }, []);
+  const selected = posts.find((p) => p.id === selectedId);
+  // Filtering and paging happen server-side, so the loaded page is already the
+  // visible set. Filtering here as well would only hide rows the server had
+  // deliberately returned, and would silently under-report once paginated.
+  const visible = posts;
+  const openCount = useMemo(
+    () => posts.filter((p) => p.status !== "resolved").length,
+    [posts],
+  );
+  const resolvedCount = posts.length - openCount;
+
+  const queryString = useCallback(
+    (cursor?: IssueCursor) => {
+      const params = new URLSearchParams({ voterId: voterKey() });
+      if (filter !== "all") params.set("category", filter);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      if (debouncedQuery.trim()) params.set("q", debouncedQuery.trim());
+      if (cursor) {
+        params.set("cursorAt", String(cursor.createdAt));
+        params.set("cursorId", cursor.id);
+      }
+      return params.toString();
+    },
+    [filter, statusFilter, debouncedQuery, voterKey],
+  );
+
+  const refresh = useCallback(async () => {
+    try {
+      const result = await request<IssuePage>(`/api/issues?${queryString()}`);
+      setPosts(result.posts);
+      setSeconded(result.seconded);
+      setCursor(result.nextCursor);
+      setLoaded(true);
+      setError("");
+    } catch (e) {
+      setError(describe(e));
+    }
+  }, [describe, queryString]);
+
+  const loadMore = useCallback(async () => {
+    if (!cursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const result = await request<IssuePage>(
+        `/api/issues?${queryString(cursor)}`,
+      );
+      // Guard against a report arriving twice if it shifted between pages.
+      setPosts((current) => {
+        const known = new Set(current.map((p) => p.id));
+        return [...current, ...result.posts.filter((p) => !known.has(p.id))];
+      });
+      setSeconded((current) => [...new Set([...current, ...result.seconded])]);
+      setCursor(result.nextCursor);
+    } catch (e) {
+      setError(describe(e));
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [cursor, loadingMore, queryString, describe]);
+  useEffect(() => {
+    // Debounce typing so a search issues one request, not one per keystroke.
+    const timer = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+  // Open any report named in the URL, deferred so the server-rendered markup
+  // and the first client render still match.
+  useEffect(() => {
     const id = new URLSearchParams(location.search).get("issue");
     if (id) queueMicrotask(() => setSelectedId(id));
-    void refresh();
+  }, []);
+
+  // Reload whenever the server-side query changes, and poll while visible.
+  useEffect(() => {
+    queueMicrotask(() => void refresh());
     const interval = setInterval(() => {
       if (document.visibilityState === "visible") void refresh();
     }, 15000);
@@ -240,7 +292,7 @@ export default function Board() {
     setFormError("");
     try {
       await request(`/api/issues/${selected.id}/second`, {
-        voterId: voterId.current,
+        voterId: voterKey(),
         seconded: !seconded.includes(selected.id),
       });
       await refresh();
@@ -275,7 +327,7 @@ export default function Board() {
     try {
       const result = await request<{ hidden: boolean }>(
         `/api/issues/${selected.id}/flag`,
-        { reason: flagReason, voterId: voterId.current },
+        { reason: flagReason, voterId: voterKey() },
       );
       flagDialog.current?.close();
       // A flag only removes the report from view once enough distinct people
@@ -846,6 +898,15 @@ export default function Board() {
                     </button>
                   ))}
                 </div>
+              )}
+              {cursor && (
+                <button
+                  className="button secondary load-more"
+                  disabled={loadingMore}
+                  onClick={() => void loadMore()}
+                >
+                  {loadingMore ? t("common.loading") : t("board.loadMore")}
+                </button>
               )}
               <div className="board-explainer">
                 <span className="explainer-mark">

@@ -903,6 +903,13 @@ label {
   }
 }
 
+/* --- Paged report list ----------------------------------------------------- */
+.load-more {
+  width: calc(100% - var(--space-md) * 2);
+  margin: 0 var(--space-md) var(--space-md);
+  justify-content: center;
+}
+
 /* --- Language switcher, accessibility utility and flag reason ------------- */
 .visually-hidden {
   position: absolute;

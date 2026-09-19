@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
-import { body, handle, json, limited } from "@/lib/http";
+import { body, fail, handle, json, limited } from "@/lib/http";
 import {
   checkPassword,
   hashToken,
@@ -18,18 +18,15 @@ export function GET(request: Request) {
 export function POST(request: Request) {
   return handle(request, async () => {
     if (await limited(request, "team-login", 5, 900000))
-      return json(
-        { error: "Too many verification attempts. Try again in 15 minutes." },
-        429,
-      );
+      return fail("error.rateLimitedLogin", 429);
     const input = await body(request);
     if (!isDepartment(input?.departmentId))
-      return json({ error: "Choose a valid department." }, 400);
+      return fail("error.invalidIssue", 400);
     const sql = db();
     const [row] =
       await sql`SELECT password_hash FROM pafos_team_credentials WHERE department_id=${input.departmentId}`;
     if (!row || !(await checkPassword(input.password, row.password_hash)))
-      return json({ error: "Incorrect department password." }, 401);
+      return fail("error.teamBadPassword", 401);
     const old = sessionToken(request);
     if (old)
       await sql`DELETE FROM pafos_team_sessions WHERE token_hash=${hashToken(old)}`;

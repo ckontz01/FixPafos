@@ -8,6 +8,7 @@ import {
   formatTimeAgo,
   negotiateLocale,
   isLocale,
+  isMessageKey,
   DEFAULT_LOCALE,
   type Locale,
   type MessageKey,
@@ -46,8 +47,8 @@ test("translated strings keep the same interpolation placeholders", () => {
 });
 
 test("no locale leaks another language into its own user-facing strings", () => {
-  const greek = /[Ͱ-Ͽ]/;
-  const cyrillic = /[Ѐ-ӿ]/;
+  const greek = /[\u0370-\u03ff]/;
+  const cyrillic = /[\u0400-\u04ff]/;
   for (const [key, value] of Object.entries(dictionaries.ru)) {
     // The report placeholder deliberately names all three languages.
     if (key === "report.messagePlaceholder") continue;
@@ -97,6 +98,21 @@ test("locale negotiation prefers a supported language and falls back to Greek", 
   assert.equal(negotiateLocale(null), DEFAULT_LOCALE);
   // A lower-priority supported language still wins over unsupported ones.
   assert.equal(negotiateLocale("de;q=0.9,ru;q=0.4"), "ru");
+});
+
+test("every error code the API can return is translatable in every locale", async () => {
+  const { ERROR_FALLBACKS } = await import("../src/lib/http");
+  for (const code of Object.keys(ERROR_FALLBACKS)) {
+    assert.ok(
+      isMessageKey(code),
+      `${code} is returned by the API but has no translation, so a reader would see a raw key`,
+    );
+    for (const locale of LOCALES)
+      assert.ok(
+        translate(locale, code as MessageKey).trim().length > 0,
+        `${code} is empty in ${locale}`,
+      );
+  }
 });
 
 test("only the three supported locale codes are accepted", () => {

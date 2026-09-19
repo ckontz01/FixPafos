@@ -1,45 +1,106 @@
-import { listIssues } from "@/lib/db";
+import { listIssues, type IssueQuery } from "@/lib/db";
 import { parseIssue, validId } from "@/lib/validation";
 import { moderateFeedback } from "@/lib/feedback-moderation";
 import { assignIssue } from "@/lib/assignment";
-import { handle, json, limited } from "@/lib/http";
+import { fail, handle, json, limited } from "@/lib/http";
 import { PhotoInputError, reportInput, saveReport } from "@/lib/photos";
+import {
+  categories,
+  severityLevels,
+  withinPafos,
+  type Category,
+  type Severity,
+} from "@/lib/issues";
+import { isDepartmentId } from "@/lib/departments";
+
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
-export function GET(request: Request) {
-  return handle(request, async () => {
-    const voterId = new URL(request.url).searchParams.get("voterId");
-    return json(await listIssues(validId(voterId) ? voterId : undefined));
-  });
+
+const number = (value: string | null) => {
+  if (value === null) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+/**
+ * Translate query parameters into a validated `IssueQuery`.
+ *
+ * Anything unrecognised is dropped rather than rejected: an unknown filter
+ * should return the unfiltered board, not an error page. Bounds are only
+ * applied when all four edges parse and describe a real box.
+ */
+function parseQuery(url: URL): IssueQuery {
+  const params = url.searchParams;
+  const category = params.get("category");
+  const status = params.get("status");
+  const severity = params.get("severity");
+  const departmentId = params.get("department");
+  const voterId = params.get("voterId");
+  const cursorAt = number(params.get("cursorAt"));
+  const cursorId = params.get("cursorId");
+
+  const west = number(params.get("west"));
+  const south = number(params.get("south"));
+  const east = number(params.get("east"));
+  const north = number(params.get("north"));
+  const bounded =
+    west !== undefined &&
+    south !== undefined &&
+    east !== undefined &&
+    north !== undefined &&
+    west < east &&
+    south < north;
+
+  const search = params.get("q")?.slice(0, 120);
+
+  return {
+    voterId: validId(voterId) ? voterId : undefined,
+    limit: number(params.get("limit")),
+    category:
+      category && Object.hasOwn(categories, category)
+        ? (category as Category)
+        : undefined,
+    status: status === "open" || status === "resolved" ? status : undefined,
+    severity: (severityLevels as readonly string[]).includes(severity ?? "")
+      ? (severity as Severity)
+      : undefined,
+    departmentId: isDepartmentId(departmentId) ? departmentId : undefined,
+    bounds: bounded ? { west, south, east, north } : undefined,
+    search: search || undefined,
+    cursor:
+      cursorAt !== undefined && cursorId && validId(cursorId)
+        ? { createdAt: cursorAt, id: cursorId }
+        : undefined,
+  };
 }
+
+export function GET(request: Request) {
+  return handle(request, async () =>
+    json(await listIssues(parseQuery(new URL(request.url)))),
+  );
+}
+
 export function POST(request: Request) {
   return handle(request, async () => {
     if (await limited(request, "report-upload", 10))
-      return json(
-        { error: "Too many submissions. Please wait a minute." },
-        429,
-      );
+      return fail("error.rateLimited", 429);
     let submission;
     try {
       submission = await reportInput(request);
     } catch (e) {
-      if (e instanceof PhotoInputError) return json({ error: e.message }, 400);
+      if (e instanceof PhotoInputError)
+        return fail(
+          e.message.includes("4 MB") ? "error.photoTooLarge" : "error.photoInvalid",
+          400,
+        );
       throw e;
     }
     const issue = parseIssue(submission.input);
-    if (!issue)
-      return json(
-        {
-          error:
-            "Add a name (up to 40 characters), a report (up to 500), a category and a location in the Pafos area.",
-        },
-        400,
-      );
+    if (!issue) return fail("error.invalidReport", 400);
+    if (!withinPafos(issue.location.longitude, issue.location.latitude))
+      return fail("error.invalidReport", 400);
     if (await limited(request, "moderation"))
-      return json(
-        { error: "Too many submissions. Please wait a minute and try again." },
-        429,
-      );
+      return fail("error.rateLimited", 429);
     const decision = await moderateFeedback({
       author: issue.author,
       message: issue.message,
@@ -47,31 +108,12 @@ export function POST(request: Request) {
     });
     if (decision.status === "blocked") {
       await saveReport(issue, submission.photo, decision);
-      return json(
-        {
-          error:
-            "This report was not published because it may contain inappropriate content. It was saved for moderator review.",
-        },
-        422,
-      );
+      return fail("error.moderationBlocked", 422);
     }
     if (decision.status === "unavailable")
-      return json(
-        {
-          error:
-            "This report could not be checked right now. Please try again.",
-        },
-        503,
-      );
+      return fail("error.moderationUnavailable", 503);
     const assignment = await assignIssue(issue);
-    if (!assignment)
-      return json(
-        {
-          error:
-            "Department assignment is temporarily unavailable. Your report has not been published; please try again.",
-        },
-        503,
-      );
+    if (!assignment) return fail("error.assignmentUnavailable", 503);
     issue.assignment = assignment;
     issue.category = assignment.category;
     await saveReport(issue, submission.photo);

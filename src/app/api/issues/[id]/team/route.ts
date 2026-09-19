@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { db, quarantine } from "@/lib/db";
-import { body, handle, json, limited } from "@/lib/http";
+import { body, fail, handle, json, limited } from "@/lib/http";
 import { teamSession } from "@/lib/team";
 import { departmentFor } from "@/lib/departments";
 import { moderateFeedback } from "@/lib/feedback-moderation";
@@ -14,7 +14,7 @@ export function POST(
   return handle(request, async () => {
     const departmentId = await teamSession(request);
     if (!departmentId)
-      return json({ error: "Verify your department first." }, 401);
+      return fail("error.teamUnauthorized", 401);
     const { id } = await context.params,
       input = await body(request),
       sql = db();
@@ -25,24 +25,15 @@ export function POST(
       !input.message.trim() ||
       input.message.trim().length > 500
     )
-      return json({ error: "Add an update of 1–500 characters." }, 400);
+      return fail("error.updateLength", 400);
     const [issue] = await sql`SELECT data FROM pafos_issues WHERE id=${id}`;
-    if (!issue) return json({ error: "Issue not found." }, 404);
+    if (!issue) return fail("error.notFound", 404);
     if (issue.data.assignment.departmentId !== departmentId)
-      return json(
-        {
-          error:
-            "Only the assigned department can give a verified update or resolve this issue.",
-        },
-        403,
-      );
+      return fail("error.teamForbidden", 403);
     if (input.action === "resolve" && issue.data.status === "resolved")
-      return json({ error: "This issue is already resolved." }, 409);
+      return fail("error.alreadyResolved", 409);
     if (await limited(request, "moderation"))
-      return json(
-        { error: "Too many submissions. Please wait a minute." },
-        429,
-      );
+      return fail("error.rateLimited", 429);
     const reply: Reply = {
       id: randomUUID(),
       author: departmentFor(departmentId).name,
@@ -55,19 +46,10 @@ export function POST(
       message: reply.message,
     });
     if (decision.status === "unavailable")
-      return json(
-        { error: "Your update could not be checked. Please try again." },
-        503,
-      );
+      return fail("error.moderationUnavailable", 503);
     if (decision.status === "blocked") {
       await quarantine(reply, decision, id);
-      return json(
-        {
-          error:
-            "Your update was saved for moderator review. The issue status has not changed.",
-        },
-        422,
-      );
+      return fail("error.moderationBlockedReply", 422);
     }
     const result = await sql.begin(async (tx) => {
       const [current] =
@@ -98,9 +80,6 @@ export function POST(
           },
           201,
         )
-      : json(
-          { error: "The issue changed. Refresh before trying again." },
-          result,
-        );
+      : fail("error.conflict", result === 404 ? 404 : result === 403 ? 403 : 409);
   });
 }
