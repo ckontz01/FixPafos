@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useI18n } from "./i18n-provider";
 export default function PhotoPicker({
   file,
   onChange,
@@ -9,6 +10,7 @@ export default function PhotoPicker({
   onChange: (file: File | null) => void;
   disabled: boolean;
 }) {
+  const { t } = useI18n();
   const [preview, setPreview] = useState("");
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
@@ -21,7 +23,7 @@ export default function PhotoPicker({
   return (
     <div className="photo-picker">
       <label>
-        Photo (optional)
+        {t("photo.label")}
         <input
           ref={input}
           type="file"
@@ -37,7 +39,7 @@ export default function PhotoPicker({
                   selected.type,
                 ))
             ) {
-              setError("Choose a JPEG, PNG or WebP photo up to 4 MB.");
+              setError(t("photo.invalidChoice"));
               e.target.value = "";
               onChange(null);
               return;
@@ -53,7 +55,7 @@ export default function PhotoPicker({
           <img
             className="issue-photo"
             src={preview}
-            alt="Selected photo preview"
+            alt={t("photo.previewAlt")}
           />
           <button
             className="text-link"
@@ -64,16 +66,11 @@ export default function PhotoPicker({
               if (input.current) input.current.value = "";
             }}
           >
-            Remove photo
+            {t("photo.remove")}
           </button>
         </>
       )}
-      <p className="fine-print">
-        JPEG, PNG or WebP, up to 4 MB. DeepSeek checks your photo against the
-        report. Clear, relevant and safe photos are approved automatically;
-        others stay private for moderator review. Avoid faces, number plates
-        and personal information.
-      </p>
+      <p className="fine-print">{t("photo.pickerHint")}</p>
       {error && (
         <p className="error-message" role="alert">
           {error}

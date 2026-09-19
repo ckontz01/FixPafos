@@ -1,36 +1,35 @@
+"use client";
 import { ArrowUpRight } from "lucide-react";
-import { departments } from "@/lib/departments";
+import { departmentIds, departmentFor } from "@/lib/departments";
 import DepartmentIdentity from "./department-identity";
+import { useI18n } from "./i18n-provider";
+import type { MessageKey } from "@/lib/i18n";
+
 export default function ServicesDirectory() {
+  const { t } = useI18n();
   return (
     <section className="services-directory">
       <div className="panel-heading">
-        <span className="board-kicker">KNOW WHO TO CONTACT</span>
-        <h1>Local services.</h1>
-        <p>Find the team that looks after your neighbourhood.</p>
+        <span className="board-kicker">{t("services.kicker")}</span>
+        <h1>{t("services.title")}</h1>
+        <p>{t("services.subtitle")}</p>
       </div>
-      <div className="directory-note">
-        Reports receive a suggested service. For an official request, contact
-        the authority directly.
-      </div>
-      {Object.entries(departments).map(([id, department]) => (
+      <div className="directory-note">{t("services.note")}</div>
+      {departmentIds.map((id) => (
         <article className="service-card" key={id}>
           <DepartmentIdentity id={id} />
-          <p>{department.remit}</p>
+          <p>{t(`departmentRemit.${id}` as MessageKey)}</p>
           <a
             className="text-link"
-            href={department.url}
+            href={departmentFor(id).url}
             target="_blank"
             rel="noreferrer"
           >
-            Official contact page <ArrowUpRight size={15} />
+            {t("issue.officialContact")} <ArrowUpRight size={15} />
           </a>
         </article>
       ))}
-      <p className="directory-disclaimer">
-        Official authority logos identify each service. PafosLive is an
-        independent community platform.
-      </p>
+      <p className="directory-disclaimer">{t("services.disclaimer")}</p>
     </section>
   );
 }

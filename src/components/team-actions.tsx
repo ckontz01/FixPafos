@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState, type FormEvent } from "react";
 import { ShieldCheck, Check } from "lucide-react";
-import { departmentFor } from "@/lib/departments";
+import { departmentKey } from "@/lib/departments";
 import type { Issue } from "@/lib/issues";
 import DepartmentIdentity from "./department-identity";
+import { useI18n } from "./i18n-provider";
+import { isMessageKey } from "@/lib/i18n";
 export default function TeamActions({
   issue,
   onUpdate,
@@ -11,6 +13,7 @@ export default function TeamActions({
   issue: Issue;
   onUpdate: () => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [department, setDepartment] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -22,7 +25,7 @@ export default function TeamActions({
     fetch("/api/team/session", { cache: "no-store" })
       .then(async (r) => {
         if (!r.ok)
-          throw new Error("Team verification is temporarily unavailable.");
+          throw new Error(t("team.unavailable"));
         const result = await r.json();
         if (active) setDepartment(result.departmentId);
       })
@@ -32,7 +35,7 @@ export default function TeamActions({
     return () => {
       active = false;
     };
-  }, []);
+  }, [t]);
   async function call(url: string, data?: unknown, method = "POST") {
     const res = await fetch(url, {
       method,
@@ -42,7 +45,9 @@ export default function TeamActions({
     const result = await res.json();
     if (!res.ok) {
       if (res.status === 401) setDepartment(null);
-      throw new Error(result.error);
+      throw new Error(
+        isMessageKey(result.code) ? t(result.code) : result.error,
+      );
     }
     return result;
   }
@@ -73,9 +78,7 @@ export default function TeamActions({
       setMessage("");
       await onUpdate();
       setNotice(
-        action === "resolve"
-          ? "Issue marked resolved. Your update is public."
-          : "Verified reply published.",
+        action === "resolve" ? t("team.resolveNotice") : t("team.replyNotice"),
       );
     } catch (e) {
       setError((e as Error).message);
@@ -99,13 +102,13 @@ export default function TeamActions({
   return (
     <details className="team-panel">
       <summary>
-        <ShieldCheck size={18} /> Team access
+        <ShieldCheck size={18} /> {t("team.access")}
       </summary>
       <DepartmentIdentity id={issue.assignment.departmentId} compact />
       {department === issue.assignment.departmentId ? (
         <>
           <span className="verified-badge">
-            <ShieldCheck size={14} /> Department password verified
+            <ShieldCheck size={14} /> {t("team.verified")}
           </span>
           <form
             className="reply-form"
@@ -115,19 +118,19 @@ export default function TeamActions({
             }}
           >
             <label>
-              Official update
+              {t("team.update")}
               <textarea
                 required
                 maxLength={500}
                 rows={3}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Explain what your team has done or will do…"
+                placeholder={t("team.replyPlaceholder")}
               />
             </label>
             <div className="team-buttons">
               <button className="button secondary" disabled={busy}>
-                Post verified reply
+                {t("team.postReply")}
               </button>
               <button
                 type="button"
@@ -138,33 +141,33 @@ export default function TeamActions({
                 onClick={() => void update("resolve")}
               >
                 <Check size={16} />
-                {issue.status === "resolved" ? "Resolved" : "Mark resolved"}
+                {issue.status === "resolved"
+                  ? t("team.resolvedState")
+                  : t("team.resolve")}
               </button>
             </div>
-            <p className="fine-print">
-              Add an update before resolving. Verified replies pass the same
-              moderation checks as community replies.
-            </p>
+            <p className="fine-print">{t("team.updateHint")}</p>
           </form>
           <button
             className="text-link"
             disabled={busy}
             onClick={() => void logout()}
           >
-            Sign out of team access
+            {t("team.signOutFull")}
           </button>
         </>
       ) : (
         <>
           {department && (
             <p className="fine-print">
-              You are verified as {departmentFor(department).name}. This issue
-              belongs to another team.
+              {t("team.otherTeam", {
+                department: t(departmentKey(department)),
+              })}
             </p>
           )}
           <form className="reply-form" onSubmit={verify}>
             <label>
-              Department password
+              {t("team.password")}
               <input
                 type="password"
                 autoComplete="current-password"
@@ -175,13 +178,10 @@ export default function TeamActions({
               />
             </label>
             <button className="button secondary" disabled={busy}>
-              {busy ? "Checking…" : "Verify team"}
+              {busy ? t("moderation.checking") : t("team.verify")}
             </button>
           </form>
-          <p className="fine-print">
-            For authorized representatives with a password issued by PafosLive.
-            Verification confirms department access on this platform.
-          </p>
+          <p className="fine-print">{t("team.eligibility")}</p>
         </>
       )}
       {error && (

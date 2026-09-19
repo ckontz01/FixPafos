@@ -1,0 +1,6 @@
+# Normalise line endings so the same bytes reach Linux CI, Vercel builds and
+# text-processing tooling regardless of the contributor's platform.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

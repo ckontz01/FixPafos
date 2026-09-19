@@ -1,6 +1,8 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import type { PhotoReview } from "@/lib/photo-review";
+import { useI18n } from "./i18n-provider";
+import { isMessageKey } from "@/lib/i18n";
 type Photo = {
   id: string;
   status: string;
@@ -17,6 +19,7 @@ function ReviewPhoto({
   password: string;
   refresh: () => Promise<void>;
 }) {
+  const { t } = useI18n();
   const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -35,7 +38,12 @@ function ReviewPhoto({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password, id: photo.id, action }),
       });
-      if (!res.ok) throw new Error((await res.json()).error);
+      if (!res.ok) {
+        const failure = await res.json();
+        throw new Error(
+          isMessageKey(failure.code) ? t(failure.code) : failure.error,
+        );
+      }
       if (action === "view") setPreview(URL.createObjectURL(await res.blob()));
       else await refresh();
     } catch (e) {
@@ -46,17 +54,33 @@ function ReviewPhoto({
   }
   return (
     <article className="quarantine-item">
-      <span className="small-label">Photo · {photo.status}</span>
+      <span className="small-label">
+        {photo.status === "approved"
+          ? t("photo.approved")
+          : photo.status === "rejected"
+            ? t("photo.rejected")
+            : t("photo.pending")}
+      </span>
       <h3>{photo.report.location.label}</h3>
       <p>{photo.report.message}</p>
       <p className="fine-print">
-        {photo.reviewedBy === "deepseek" ? "Auto-approved by DeepSeek. " :
-          photo.status !== "pending" ? "Reviewed by a moderator. " : "Needs moderator review. "}
-        {photo.aiReview ? <>
-          {photo.aiReview.source === "deepseek" &&
-            `AI assessment: ${photo.aiReview.category} (${photo.aiReview.confidence} confidence). `}
-          {photo.aiReview.reason}
-        </> : "No automatic assessment is available for this photo."}
+        {photo.reviewedBy === "deepseek"
+          ? t("photo.autoApproved")
+          : photo.status !== "pending"
+            ? t("photo.reviewedByModerator")
+            : t("photo.needsReview")}
+        {photo.aiReview ? (
+          <>
+            {photo.aiReview.source === "deepseek" &&
+              t("photo.aiAssessment", {
+                category: photo.aiReview.category,
+                confidence: photo.aiReview.confidence,
+              })}
+            {photo.aiReview.reason}
+          </>
+        ) : (
+          t("photo.noAssessment")
+        )}
       </p>
       {preview ? (
         // Authenticated private preview uses a short-lived browser object URL.
@@ -64,7 +88,7 @@ function ReviewPhoto({
         <img
           className="issue-photo"
           src={preview}
-          alt="Photo awaiting moderation"
+          alt={t("photo.awaitingAlt")}
         />
       ) : (
         <button
@@ -72,7 +96,7 @@ function ReviewPhoto({
           disabled={busy}
           onClick={() => void action("view")}
         >
-          View private photo
+          {t("photo.view")}
         </button>
       )}
       <div className="team-buttons">
@@ -81,14 +105,14 @@ function ReviewPhoto({
           disabled={busy || !preview || photo.status === "approved"}
           onClick={() => void action("approve")}
         >
-          Approve photo
+          {t("photo.approve")}
         </button>
         <button
           className="button secondary"
           disabled={busy || photo.status === "rejected"}
           onClick={() => void action("reject")}
         >
-          Reject photo
+          {t("photo.reject")}
         </button>
       </div>
       {error && (
@@ -100,6 +124,7 @@ function ReviewPhoto({
   );
 }
 export default function PhotoModeration({ password }: { password: string }) {
+  const { t } = useI18n();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [error, setError] = useState("");
   const refresh = useCallback(async () => {
@@ -110,28 +135,25 @@ export default function PhotoModeration({ password }: { password: string }) {
         body: JSON.stringify({ password }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.error);
+      if (!res.ok)
+        throw new Error(
+          isMessageKey(result.code) ? t(result.code) : result.error,
+        );
       setPhotos(result.photos);
       setError("");
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [password]);
+  }, [password, t]);
   useEffect(() => {
     queueMicrotask(() => void refresh());
   }, [refresh]);
   return (
     <section className="photo-review">
-      <h2>Photo review</h2>
-      <p>
-        DeepSeek automatically approves clearly relevant, safe photos.
-        Uncertain, irrelevant, inappropriate or privacy-sensitive photos and
-        failed AI checks stay private here, with pending reviews first.
-        Check the image before approving. Photos only become public when their
-        report is also published. You can reject an auto-approved photo below.
-      </p>
+      <h2>{t("photo.reviewTitle")}</h2>
+      <p>{t("moderation.photoIntro")}</p>
       <button className="button secondary" onClick={() => void refresh()}>
-        Refresh photos
+        {t("moderation.refreshPhotos")}
       </button>
       {error && (
         <p role="alert" className="error-message">
@@ -139,7 +161,7 @@ export default function PhotoModeration({ password }: { password: string }) {
         </p>
       )}
       {!photos.length && !error && (
-        <p className="muted">No photos to review.</p>
+        <p className="muted">{t("photo.noneToReview")}</p>
       )}
       {photos.map((photo) => (
         <ReviewPhoto

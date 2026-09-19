@@ -143,7 +143,7 @@ body {
   color: var(--ink);
 }
 body {
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-stack-body);
   font-size: 15px;
   line-height: 1.55;
 }
@@ -190,7 +190,7 @@ button:active:not(:disabled) {
 h1,
 h2,
 h3 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   font-style: normal;
   overflow-wrap: anywhere;
   min-width: 0;
@@ -224,7 +224,7 @@ p {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.05em;

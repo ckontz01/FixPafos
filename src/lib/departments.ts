@@ -1,3 +1,16 @@
+import type { MessageKey } from "./i18n/messages/el";
+
+/**
+ * The canonical service directory. Identifiers are stable and language
+ * independent: they are what the database stores, what authorization checks
+ * compare, and what the classifier must choose from.
+ *
+ * `name` and `remit` stay in English on purpose. They are the text sent to the
+ * model as the routing directory and the value recorded on verified replies for
+ * audit, so they must not shift with the reader's interface language. The
+ * display name shown to a citizen comes from `department.<id>` in the
+ * translation dictionaries instead.
+ */
 export const departments = {
   technical: {
     name: "Pafos Municipality · Technical Services",
@@ -47,7 +60,18 @@ export const departments = {
     url: "https://pafos.org.cy/en/contact/",
   },
 } as const;
+
 export type DepartmentId = keyof typeof departments;
+export const departmentIds = Object.keys(departments) as DepartmentId[];
+
+export const isDepartmentId = (id: unknown): id is DepartmentId =>
+  typeof id === "string" && Object.hasOwn(departments, id);
+
 export function departmentFor(id: string) {
   return departments[id as DepartmentId] ?? departments.review;
+}
+
+/** Translation key for a department's display name, falling back to general enquiries. */
+export function departmentKey(id: string): MessageKey {
+  return `department.${isDepartmentId(id) ? id : "review"}` as MessageKey;
 }

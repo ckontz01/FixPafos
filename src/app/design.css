@@ -2,6 +2,10 @@
  * genre: modern-minimal · macrostructure: Map / Diagram
  * design-system: design.md · designed-as-app · navigation: N1a · footer: Ft2 */
 :root {
+  /* Latin renders in the design-system fonts; Greek and Cyrillic fall through
+   * to Noto Sans per glyph via its unicode-range. Order matters. */
+  --font-stack-body: var(--font-body), var(--font-coverage), sans-serif;
+  --font-stack-display: var(--font-display), var(--font-coverage), sans-serif;
   --paper: oklch(97.2% 0.009 90);
   --panel: oklch(99.7% 0.002 100);
   --surface: oklch(94.4% 0.012 95);
@@ -152,7 +156,7 @@ h3 {
   color: var(--accent);
 }
 .map-heading strong {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   font-size: 16px;
   letter-spacing: -0.04em;
 }
@@ -180,7 +184,7 @@ h3 {
   width: 39px;
   height: 39px;
   border-width: 3px;
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   box-shadow: var(--shadow-pin);
 }
 .issue-pin.selected {
@@ -196,7 +200,7 @@ h3 {
   color: var(--ink);
   border-radius: 7px;
   padding: 5px 9px;
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-stack-body);
   font-size: 11px;
   font-weight: 500;
   white-space: nowrap;
@@ -254,7 +258,7 @@ h3 {
   gap: 7px;
 }
 .board-counts strong {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   color: var(--ink);
   font-size: 23px;
   letter-spacing: -0.05em;
@@ -363,7 +367,7 @@ h3 {
   font-size: 10px;
 }
 .issue-row h2 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   font-size: 18px;
   letter-spacing: -0.035em;
   margin: 14px 0 6px;
@@ -613,7 +617,7 @@ button.text-link {
   gap: 7px;
 }
 .replies h2 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   font-size: 19px;
   letter-spacing: -0.035em;
 }
@@ -758,14 +762,14 @@ label {
   border-bottom: 0;
 }
 .photo-review > h2 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   letter-spacing: -0.04em;
 }
 .empty-state {
   padding: 28px 20px;
 }
 .empty-state h2 {
-  font-family: var(--font-display), sans-serif;
+  font-family: var(--font-stack-display);
   font-size: 21px;
   letter-spacing: -0.04em;
 }
@@ -898,7 +902,84 @@ label {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* --- Language switcher, accessibility utility and flag reason ------------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link {
+  position: absolute;
+  left: var(--space-sm);
+  top: var(--space-sm);
+  z-index: 100;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--logo-paper);
+  font-size: 13px;
+  font-weight: 550;
+  transform: translateY(-200%);
+  transition: transform 0.15s ease;
+}
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.language-switcher select {
+  appearance: none;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-control);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--font-stack-body);
+  font-size: 12px;
+  font-weight: 550;
+  /* 44px keeps the control within the shared touch-target floor. */
+  min-height: 44px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+.language-switcher select:hover {
+  background: var(--surface);
+}
+.flag-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-block: var(--space-sm);
+  font-size: 13px;
+  color: var(--secondary);
+}
+.flag-reason select {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-control);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--font-stack-body);
+  font-size: 14px;
+  min-height: 44px;
+  padding: 0 10px;
+}
 @media (max-width: 23rem) {
+  /* Kept visible at every width: switching language is a primary action for a
+   * multilingual civic service, so it is compacted rather than hidden. */
+  .language-switcher select {
+    font-size: 11px;
+    padding-inline: 7px;
+  }
   .site-header {
     padding: 12px;
     gap: 8px;

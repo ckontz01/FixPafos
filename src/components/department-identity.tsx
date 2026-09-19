@@ -1,5 +1,8 @@
+"use client";
 import Image from "next/image";
-import { departmentFor } from "@/lib/departments";
+import { departmentKey } from "@/lib/departments";
+import { useI18n } from "./i18n-provider";
+
 export default function DepartmentIdentity({
   id,
   compact = false,
@@ -7,8 +10,9 @@ export default function DepartmentIdentity({
   id: string;
   compact?: boolean;
 }) {
-  const department = departmentFor(id);
-  const [authority, service] = department.name.split(" · ");
+  const { t } = useI18n();
+  // Display names are translated; the " · " separator is shared by every locale.
+  const [authority, service] = t(departmentKey(id)).split(" · ");
   const eoa = id === "water" || id === "sewerage";
   return (
     <span className={`department-identity${compact ? " compact" : ""}`}>

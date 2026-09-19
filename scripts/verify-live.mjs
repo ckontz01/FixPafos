@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import postgres from "postgres";
 import { mkdir } from "node:fs/promises";
 const base = process.env.TEST_BASE_URL || "http://localhost:3107";
+// These assertions match English accessible names, so the interface
+// language is pinned explicitly instead of being negotiated per machine.
+const withLang = (url) => url + (url.includes("?") ? "&" : "?") + "lang=en";
 if (!/^https?:\/\/(localhost:3107|pafoslive[^/]*\.vercel\.app)$/.test(base))
   throw new Error("Only PafosLive test targets are permitted");
 const sql = postgres(process.env.DATABASE_URL, { ssl: "verify-full", max: 1 });
@@ -36,7 +39,7 @@ async function api(path, data) {
 try {
   await mkdir("outputs", { recursive: true });
   assert.equal((await api("/api/health")).status, 200);
-  await page.goto(base);
+  await page.goto(withLang(base));
   await page
     .getByRole("button", { name: "Report an issue", exact: true })
     .waitFor();
@@ -73,7 +76,7 @@ try {
     .getByText("Suggested responsible service", { exact: true })
     .waitFor();
   await page.screenshot({ path: "outputs/desktop-report.png", fullPage: true });
-  await other.goto(base);
+  await other.goto(withLang(base));
   await other
     .getByRole("button", { name: /Roads & pavements: A large pothole/ })
     .first()

@@ -3,15 +3,17 @@ import { useEffect, useRef, useState } from "react";
 import * as maplibregl from "maplibre-gl";
 import { Check, LocateFixed, MapPin, RotateCcw } from "lucide-react";
 import CategoryIcon from "./category-icon";
+import { useI18n } from "./i18n-provider";
 import {
   categories,
+  categoryIds,
   PAFOS_CENTER,
   PAFOS_BOUNDS,
   withinPafos,
   type Issue,
   type IssueLocation,
-  type Category,
 } from "@/lib/issues";
+import type { MessageKey } from "@/lib/i18n";
 type Props = {
   issues: Issue[];
   selected?: Issue;
@@ -21,6 +23,7 @@ type Props = {
   onPick: (location: IssueLocation) => void;
 };
 export default function IssueMap(props: Props) {
+  const { t, tp } = useI18n();
   const markerIcons = useRef<HTMLDivElement>(null);
   const host = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null),
@@ -146,9 +149,13 @@ export default function IssueMap(props: Props) {
         }
         button.setAttribute(
           "aria-label",
-          `${issue.status === "resolved" ? "Resolved · " : ""}${category.label}: ${issue.message}`,
+          `${issue.status === "resolved" ? t("map.resolvedPrefix") : ""}${t(
+            `category.${issue.category}` as MessageKey,
+          )}: ${issue.message}`,
         );
-        button.title = `${category.label} · ${issue.location.label}`;
+        button.title = `${t(
+          `category.${issue.category}` as MessageKey,
+        )} · ${issue.location.label}`;
         button.addEventListener("click", (e) => {
           e.stopPropagation();
           latest.current.onSelect(issue.id);
@@ -163,7 +170,9 @@ export default function IssueMap(props: Props) {
           .addTo(map.current!);
         markers.current.push(marker);
       });
-  }, [props.issues, props.selected?.id, ready]);
+    // `t` is a dependency because pin labels and tooltips are translated:
+    // switching language must relabel every marker.
+  }, [props.issues, props.selected?.id, ready, t]);
   useEffect(() => {
     if (
       selectedId &&
@@ -194,7 +203,7 @@ export default function IssueMap(props: Props) {
     const center = map.current?.getCenter();
     if (!center) return;
     if (!withinPafos(center.lng, center.lat)) {
-      setError("Move the map to Pafos before choosing a location.");
+      setError(t("map.moveToPafos"));
       return;
     }
     props.onPick({ longitude: center.lng, latitude: center.lat, label: "" });
@@ -202,18 +211,14 @@ export default function IssueMap(props: Props) {
   };
   const locate = () => {
     if (!navigator.geolocation) {
-      setError(
-        "Your browser does not support location. Choose a point on the map.",
-      );
+      setError(t("map.noGeolocation"));
       return;
     }
     navigator.geolocation.getCurrentPosition(
       (p) => {
         const { longitude, latitude } = p.coords;
         if (!withinPafos(longitude, latitude)) {
-          setError(
-            "You are outside the Pafos reporting area. Choose a point on the map.",
-          );
+          setError(t("map.outsideArea"));
           return;
         }
         setError("");
@@ -221,22 +226,20 @@ export default function IssueMap(props: Props) {
         if (props.picking) props.onPick({ longitude, latitude, label: "" });
       },
       () =>
-        setError(
-          "Location access was unavailable. You can choose a point on the map.",
-        ),
+        setError(t("map.locationUnavailable")),
       { timeout: 10000 },
     );
   };
   return (
     <section
       className={`map-panel${props.picking ? " picking" : ""}`}
-      aria-label="Public issue map of Pafos"
+      aria-label={t("map.label")}
     >
       <div ref={host} className="map-canvas" />
       <div ref={markerIcons} hidden aria-hidden="true">
-        {Object.keys(categories).map((category) => (
+        {categoryIds.map((category) => (
           <span key={category} data-marker-icon={category}>
-            <CategoryIcon category={category as Category} size={19} />
+            <CategoryIcon category={category} size={19} />
           </span>
         ))}
         <span data-marker-icon="resolved">
@@ -246,11 +249,9 @@ export default function IssueMap(props: Props) {
       <div className="map-heading">
         <MapPin size={18} />
         <div>
-          <strong>Pafos, Cyprus</strong>
+          <strong>{t("nav.location")}</strong>
           <span>
-            {props.picking
-              ? "Click the map to place your report"
-              : "Your neighbourhood, on the map"}
+            {props.picking ? t("map.pickPrompt") : t("map.tagline")}
           </span>
         </div>
       </div>
@@ -258,8 +259,8 @@ export default function IssueMap(props: Props) {
         <button
           className="icon-button"
           onClick={locate}
-          title="Use my location"
-          aria-label="Use my location"
+          title={t("map.useMyLocation")}
+          aria-label={t("map.useMyLocation")}
         >
           <LocateFixed size={19} />
         </button>
@@ -274,44 +275,41 @@ export default function IssueMap(props: Props) {
               { padding: 40, duration: 300 },
             );
           }}
-          title="Reset Pafos map"
-          aria-label="Reset Pafos map"
+          title={t("map.reset")}
+          aria-label={t("map.reset")}
         >
           <RotateCcw size={18} />
         </button>
       </div>
       {!ready && !error && (
         <div className="map-notice" role="status">
-          Loading Pafos streets…
+          {t("map.loading")}
         </div>
       )}
       {error && (
         <div className="map-notice error" role="alert">
           {error}
-          <button onClick={() => setError("")} aria-label="Dismiss map message">
+          <button onClick={() => setError("")} aria-label={t("map.dismiss")}>
             ×
           </button>
         </div>
       )}
       {props.picking ? (
         <div className="map-bottom">
-          <span>Pan or zoom to the exact spot.</span>
+          <span>{t("map.panHint")}</span>
           <button
             className="button small"
             disabled={!ready}
             onClick={chooseCenter}
           >
-            Use map centre
+            {t("map.useCentre")}
           </button>
         </div>
       ) : (
         <div className="map-bottom map-key">
           <span className="live-dot" />
-          <span>
-            {props.issues.length} public{" "}
-            {props.issues.length === 1 ? "report" : "reports"} on this map
-          </span>
-          <span className="key-note">Select a pin to read</span>
+          <span>{tp("map.publicReports", props.issues.length)}</span>
+          <span className="key-note">{t("map.selectPin")}</span>
         </div>
       )}
     </section>

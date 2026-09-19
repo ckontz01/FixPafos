@@ -25,27 +25,48 @@ import {
   X,
 } from "lucide-react";
 import {
-  categories,
-  timeAgo,
+  categoryIds,
+  flagReasons,
   type Category,
+  type FlagReason,
   type ReportedCategory,
   type Issue,
   type IssueLocation,
 } from "@/lib/issues";
-import { departmentFor } from "@/lib/departments";
+import { departmentFor, departmentKey } from "@/lib/departments";
 import TeamActions from "./team-actions";
 import PhotoPicker from "./photo-picker";
 import DepartmentIdentity from "./department-identity";
 import CategoryIcon from "./category-icon";
 import ServicesDirectory from "./services-directory";
+import LanguageSwitcher from "./language-switcher";
+import { useI18n } from "./i18n-provider";
+import { isMessageKey, type MessageKey } from "@/lib/i18n";
+
+/** Typed translation keys for canonical category identifiers. */
+const categoryKey = (category: Category): MessageKey =>
+  `category.${category}` as MessageKey;
 const IssueMap = dynamic(() => import("./issue-map"), {
   ssr: false,
   loading: () => (
-    <section className="map-panel map-placeholder">
-      Opening the Pafos map…
-    </section>
+    <section className="map-panel map-placeholder" />
   ),
 });
+/**
+ * API failures carry a stable `code` alongside a human-readable fallback, so the
+ * interface can render the message in the reader's language without the server
+ * needing to know which language that is.
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly code?: unknown,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function request<T>(url: string, data?: unknown): Promise<T> {
   const response = await fetch(url, {
     method: data ? "POST" : "GET",
@@ -59,11 +80,22 @@ async function request<T>(url: string, data?: unknown): Promise<T> {
   });
   const result = response.status === 204 ? null : await response.json();
   if (!response.ok)
-    throw new Error(result?.error ?? "The request failed. Please try again.");
+    throw new ApiError(result?.error ?? "The request failed.", result?.code);
   return result as T;
 }
 export default function Board() {
+  const { t, tp, timeAgo } = useI18n();
+  // Prefer the server's stable error code so the message appears in the
+  // reader's language; fall back to the server text for unrecognised codes.
+  const describe = useCallback(
+    (error: unknown) => {
+      const code = error instanceof ApiError ? error.code : undefined;
+      return isMessageKey(code) ? t(code) : (error as Error).message;
+    },
+    [t],
+  );
   const [photo, setPhoto] = useState<File | null>(null);
+  const [flagReason, setFlagReason] = useState<FlagReason>("offensive");
   const [statusFilter, setStatusFilter] = useState("all");
   const [posts, setPosts] = useState<Issue[]>([]),
     [seconded, setSeconded] = useState<string[]>([]);
@@ -92,12 +124,17 @@ export default function Board() {
         (p) =>
           (filter === "all" || p.category === filter) &&
           (statusFilter === "all" || (p.status ?? "open") === statusFilter) &&
-          `${p.message} ${p.location.label} ${departmentFor(p.assignment.departmentId).name}`
+          `${p.message} ${p.location.label} ${t(departmentKey(p.assignment.departmentId))}`
             .toLowerCase()
             .includes(query.toLowerCase()),
       ),
-    [posts, filter, query, statusFilter],
+    [posts, filter, query, statusFilter, t],
   );
+  const openCount = useMemo(
+    () => posts.filter((p) => p.status !== "resolved").length,
+    [posts],
+  );
+  const resolvedCount = posts.length - openCount;
   const refresh = useCallback(async () => {
     try {
       const result = await request<{ posts: Issue[]; seconded: string[] }>(
@@ -108,9 +145,9 @@ export default function Board() {
       setLoaded(true);
       setError("");
     } catch (e) {
-      setError((e as Error).message);
+      setError(describe(e));
     }
-  }, []);
+  }, [describe]);
   useEffect(() => {
     try {
       voterId.current =
@@ -163,7 +200,7 @@ export default function Board() {
     event.preventDefault();
     setFormError("");
     if (!draft) {
-      setFormError("Choose the issue location on the map first.");
+      setFormError(t("report.locationPrompt"));
       return;
     }
     setBusy(true);
@@ -189,10 +226,10 @@ export default function Board() {
       setLocationLabel("");
       setFilter("all");
       setQuery("");
-      setNotice("Your report is published and visible to everyone on the map.");
+      setNotice(t("report.published"));
       history.replaceState(null, "", `/?issue=${result.post.id}`);
     } catch (e) {
-      setFormError((e as Error).message);
+      setFormError(describe(e));
     } finally {
       setBusy(false);
     }
@@ -208,7 +245,7 @@ export default function Board() {
       });
       await refresh();
     } catch (e) {
-      setFormError((e as Error).message);
+      setFormError(describe(e));
     } finally {
       setBusy(false);
     }
@@ -226,7 +263,7 @@ export default function Board() {
       setReply("");
       await refresh();
     } catch (e) {
-      setFormError((e as Error).message);
+      setFormError(describe(e));
     } finally {
       setBusy(false);
     }
@@ -236,24 +273,34 @@ export default function Board() {
     setBusy(true);
     setFormError("");
     try {
-      await request(`/api/issues/${selected.id}/flag`, {});
-      setPosts((p) => p.filter((i) => i.id !== selected.id));
-      flagDialog.current?.close();
-      back();
-      setNotice(
-        "The flagged report and its replies have been removed from the public board.",
+      const result = await request<{ hidden: boolean }>(
+        `/api/issues/${selected.id}/flag`,
+        { reason: flagReason, voterId: voterId.current },
       );
+      flagDialog.current?.close();
+      // A flag only removes the report from view once enough distinct people
+      // raise it; otherwise it stays visible while a moderator reviews it.
+      if (result?.hidden) {
+        setPosts((p) => p.filter((i) => i.id !== selected.id));
+        back();
+        setNotice(t("flag.hidden"));
+      } else {
+        setNotice(t("flag.received"));
+      }
     } catch (e) {
       flagDialog.current?.close();
-      setFormError((e as Error).message);
+      setFormError(describe(e));
     } finally {
       setBusy(false);
     }
   }
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        {t("a11y.skipToContent")}
+      </a>
       <header className="site-header">
-        <Link href="/" className="wordmark" aria-label="PafosLive home">
+        <Link href="/" className="wordmark" aria-label={t("nav.home")}>
           <span className="brand-symbol">
             <MapPin size={23} strokeWidth={2.1} />
           </span>
@@ -261,13 +308,13 @@ export default function Board() {
             Pafos<span className="wordmark-light">Live</span>
           </span>
         </Link>
-        <nav className="app-nav" aria-label="Main navigation">
+        <nav className="app-nav" aria-label={t("nav.main")}>
           <button
             aria-current={mode !== "services" ? "page" : undefined}
             onClick={back}
             disabled={busy}
           >
-            Community map
+            {t("nav.map")}
           </button>
           <button
             aria-current={mode === "services" ? "page" : undefined}
@@ -283,18 +330,19 @@ export default function Board() {
             }}
             disabled={busy}
           >
-            Local services
+            {t("nav.services")}
           </button>
         </nav>
         <span className="header-location">
-          <span className="live-dot" /> Pafos, Cyprus
+          <span className="live-dot" /> {t("nav.location")}
         </span>
+        <LanguageSwitcher />
         <button className="button" onClick={startReport} disabled={busy}>
           <Plus size={18} />
-          <span>Report an issue</span>
+          <span>{t("nav.report")}</span>
         </button>
       </header>
-      <main className="workspace">
+      <main className="workspace" id="main-content" tabIndex={-1}>
         <IssueMap
           issues={visible}
           selected={selected}
@@ -306,7 +354,7 @@ export default function Board() {
         <aside
           className="board-panel"
           ref={sidebar}
-          aria-label="Community board"
+          aria-label={t("board.label")}
         >
           {mode === "services" ? (
             <ServicesDirectory />
@@ -314,20 +362,17 @@ export default function Board() {
             <>
               <div className="panel-heading">
                 <button className="back-link" onClick={back} disabled={busy}>
-                  <ArrowLeft size={17} /> Community board
+                  <ArrowLeft size={17} /> {t("report.backToBoard")}
                 </button>
-                <h1>What needs fixing?</h1>
-                <p>
-                  A clear description and an exact location help everyone
-                  understand the issue.
-                </p>
+                <h1>{t("report.title")}</h1>
+                <p>{t("report.subtitle")}</p>
               </div>
               <form className="report-form" onSubmit={submit}>
                 <label>
-                  Issue type
+                  {t("report.type")}
                   <select
                     value={category}
-                    aria-label="Issue type"
+                    aria-label={t("report.type")}
                     onChange={(e) =>
                       setCategory(e.target.value as ReportedCategory)
                     }
@@ -337,10 +382,10 @@ export default function Board() {
                         : undefined
                     }
                   >
-                    <option value="unsure">I am not sure</option>
-                    {Object.entries(categories).map(([id, c]) => (
+                    <option value="unsure">{t("report.unsure")}</option>
+                    {categoryIds.map((id) => (
                       <option key={id} value={id}>
-                        {c.label}
+                        {t(categoryKey(id))}
                       </option>
                     ))}
                   </select>
@@ -350,71 +395,68 @@ export default function Board() {
                     id="auto-classification-help"
                     className="classification-note"
                   >
-                    DeepSeek will automatically classify the issue type and
-                    suggest the responsible service from your description and
-                    location.
+                    {t("report.autoClassifyNote")}
                   </p>
                 )}
                 <div className={`location-step ${draft ? "complete" : ""}`}>
                   <MapPin size={20} />
                   <div>
                     <strong>
-                      {draft ? "Location selected" : "Choose a spot on the map"}
+                      {draft
+                        ? t("report.locationChosen")
+                        : t("report.locationPrompt")}
                     </strong>
                     <span>
                       {draft
-                        ? `${draft.latitude.toFixed(5)}, ${draft.longitude.toFixed(5)} · click again to move`
-                        : "Click the exact spot, or use the map centre button."}
+                        ? t("report.locationChosenHint", {
+                            coords: `${draft.latitude.toFixed(5)}, ${draft.longitude.toFixed(5)}`,
+                          })
+                        : t("report.locationPromptHint")}
                     </span>
                   </div>
                   {draft && <Check size={18} />}
                 </div>
                 <label>
-                  Street or nearby landmark
+                  {t("report.landmark")}
                   <input
                     required
                     maxLength={100}
                     value={locationLabel}
                     onChange={(e) => setLocationLabel(e.target.value)}
-                    placeholder="e.g. Apostolou Pavlou Avenue"
+                    placeholder={t("report.landmarkPlaceholder")}
                     autoComplete="off"
                   />
                 </label>
                 <label>
-                  Your name or nickname
+                  {t("report.author")}
                   <input
                     required
                     maxLength={40}
                     value={author}
                     onChange={(e) => setAuthor(e.target.value)}
-                    placeholder="How you want to appear publicly"
+                    placeholder={t("report.authorPlaceholder")}
                     autoComplete="nickname"
                   />
                 </label>
                 <label>
-                  What is happening?
+                  {t("report.message")}
                   <textarea
                     required
                     maxLength={500}
                     rows={4}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Describe the problem and what needs attention. English, Ελληνικά and other languages are welcome."
+                    placeholder={t("report.messagePlaceholder")}
                   />
-                  <span className="field-count">{message.length}/500</span>
+                  <span className="field-count">
+                    {t("report.charCount", { count: message.length })}
+                  </span>
                 </label>
                 <PhotoPicker file={photo} onChange={setPhoto} disabled={busy} />
-                <p className="privacy-note">
-                  Your name, report and location will be public. Leave out phone
-                  numbers, private addresses and other personal details.
-                </p>
+                <p className="privacy-note">{t("report.privacyNote")}</p>
                 <div className="routing-note">
                   <ArrowUpRight size={18} />
-                  <p>
-                    We’ll suggest the responsible service automatically.
-                    Publishing here does not send an official request to the
-                    authority.
-                  </p>
+                  <p>{t("report.routingNote")}</p>
                 </div>
                 {formError && (
                   <p className="error-message" role="alert">
@@ -422,31 +464,28 @@ export default function Board() {
                   </p>
                 )}
                 <button className="button full" disabled={busy}>
-                  {busy ? "Checking & assigning…" : "Publish report"}
+                  {busy ? t("report.submitting") : t("report.submit")}
                   {!busy && <ArrowUpRight size={18} />}
                 </button>
-                <p className="fine-print">
-                  Reports are checked before publication. If a report is
-                  blocked, a moderator can review it.
-                </p>
+                <p className="fine-print">{t("report.finePrint")}</p>
               </form>
             </>
           ) : selected ? (
             <>
               <div className="panel-heading detail-heading">
                 <button className="back-link" onClick={back} disabled={busy}>
-                  <ArrowLeft size={17} /> All reports
+                  <ArrowLeft size={17} /> {t("issue.backToAll")}
                 </button>
                 <div
                   className="category-label"
                   data-category={selected.category}
                 >
                   <CategoryIcon category={selected.category} />
-                  {categories[selected.category].label}
+                  {t(categoryKey(selected.category))}
                 </div>
                 {selected.assignment.source === "deepseek" && (
                   <span className="classification-note">
-                    Auto-classified by DeepSeek
+                    {t("issue.autoClassified")}
                   </span>
                 )}
                 <h1>{selected.location.label}</h1>
@@ -457,7 +496,9 @@ export default function Board() {
                   <span>
                     <strong>{selected.author}</strong>
                     <span>
-                      Reported {timeAgo(selected.createdAt).toLowerCase()}
+                      {t("issue.reportedBy", {
+                        time: timeAgo(selected.createdAt).toLowerCase(),
+                      })}
                     </span>
                   </span>
                 </div>
@@ -473,13 +514,18 @@ export default function Board() {
                 <span
                   className={`status-badge ${selected.status === "resolved" ? "resolved" : ""}`}
                 >
-                  {selected.status === "resolved" ? "✓ Resolved" : "Open"}
+                  {selected.status === "resolved"
+                    ? t("status.resolved")
+                    : t("status.open")}
                 </span>
                 {selected.resolution && (
                   <p className="fine-print">
-                    Marked resolved by{" "}
-                    {departmentFor(selected.resolution.departmentId).name} ·{" "}
-                    {timeAgo(selected.resolution.at)}
+                    {t("issue.resolvedBy", {
+                      department: t(
+                        departmentKey(selected.resolution.departmentId),
+                      ),
+                      time: timeAgo(selected.resolution.at),
+                    })}
                   </p>
                 )}
                 {selected.photo?.url && (
@@ -488,23 +534,23 @@ export default function Board() {
                   <img
                     className="issue-photo"
                     src={selected.photo.url}
-                    alt={`Reported issue at ${selected.location.label}`}
+                    alt={t("issue.photoAlt", {
+                      location: selected.location.label,
+                    })}
                   />
                 )}
                 {selected.photo?.status === "pending" && (
-                  <p className="photo-status">
-                    Photo awaiting moderator review.
-                  </p>
+                  <p className="photo-status">{t("issue.photoPending")}</p>
                 )}
                 <div className="assignment-block">
                   <span className="small-label">
-                    Suggested responsible service
+                    {t("issue.suggestedService")}
                   </span>
                   <DepartmentIdentity id={selected.assignment.departmentId} />
                   <p>
                     {selected.assignment.confidence === "low"
-                      ? "Responsibility is unclear. A person should review the routing."
-                      : "Automatically assigned with DeepSeek. Responsibility should be confirmed by the service."}
+                      ? t("issue.assignmentLow")
+                      : t("issue.assignmentAuto")}
                   </p>
                   <a
                     className="text-link"
@@ -512,9 +558,9 @@ export default function Board() {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Official contact page <ArrowUpRight size={16} />
+                    {t("issue.officialContact")} <ArrowUpRight size={16} />
                   </a>
-                  <span className="fine-print">Not sent to the authority.</span>
+                  <span className="fine-print">{t("issue.notSent")}</span>
                 </div>
                 <div className="detail-actions">
                   <button
@@ -524,14 +570,14 @@ export default function Board() {
                   >
                     <ThumbsUp size={17} />
                     {seconded.includes(selected.id)
-                      ? "Supported"
-                      : "I see this too"}
+                      ? t("issue.supported")
+                      : t("issue.support")}
                     <span>{selected.seconds}</span>
                   </button>
                   <button
                     className="icon-button"
-                    title="Flag inappropriate report"
-                    aria-label="Flag inappropriate report"
+                    title={t("flag.action")}
+                    aria-label={t("flag.action")}
                     onClick={() => flagDialog.current?.showModal()}
                     disabled={busy}
                   >
@@ -545,12 +591,11 @@ export default function Board() {
                 />
                 <div className="replies">
                   <h2>
-                    Community replies <span>{selected.replies.length}</span>
+                    {t("reply.heading")}{" "}
+                    <span>{selected.replies.length}</span>
                   </h2>
                   {selected.replies.length === 0 && (
-                    <p className="muted">
-                      Add useful details or an update from the area.
-                    </p>
+                    <p className="muted">{t("reply.empty")}</p>
                   )}
                   {selected.replies.map((r) => (
                     <article className="reply" key={r.id}>
@@ -565,10 +610,12 @@ export default function Board() {
                       {r.verifiedDepartmentId && (
                         <span
                           className="verified-badge"
-                          title="Posted using this department’s PafosLive password"
+                          title={t("reply.verifiedTitle")}
                         >
-                          <ShieldCheck size={14} /> Verified team
-                          {r.kind === "resolution" ? " · Resolved" : ""}
+                          <ShieldCheck size={14} />{" "}
+                          {r.kind === "resolution"
+                            ? t("reply.verifiedResolved")
+                            : t("reply.verified")}
                         </span>
                       )}
                       <span>{timeAgo(r.createdAt)}</span>
@@ -578,7 +625,7 @@ export default function Board() {
                 </div>
                 <form className="reply-form" onSubmit={sendReply}>
                   <label>
-                    Your name or nickname
+                    {t("reply.author")}
                     <input
                       required
                       maxLength={40}
@@ -588,26 +635,24 @@ export default function Board() {
                     />
                   </label>
                   <label>
-                    Add a reply
+                    {t("reply.add")}
                     <textarea
                       required
                       maxLength={500}
                       rows={3}
                       value={reply}
                       onChange={(e) => setReply(e.target.value)}
-                      placeholder="Share an update…"
+                      placeholder={t("reply.placeholder")}
                     />
                   </label>
-                  <p className="fine-print">
-                    Replies are public and checked before publication.
-                  </p>
+                  <p className="fine-print">{t("reply.finePrint")}</p>
                   {formError && (
                     <p className="error-message" role="alert">
                       {formError}
                     </p>
                   )}
                   <button className="button secondary" disabled={busy}>
-                    {busy ? "Please wait…" : "Post reply"}
+                    {busy ? t("common.pleaseWait") : t("reply.submit")}
                   </button>
                 </form>
               </div>
@@ -616,63 +661,48 @@ export default function Board() {
             <>
               <div className="panel-heading overview-heading">
                 <div className="board-kicker">
-                  <span className="live-dot" /> YOUR NEIGHBOURHOOD, CONNECTED
+                  <span className="live-dot" /> {t("board.kicker")}
                 </div>
-                <h1>
-                  A better Pafos
-                  <br />
-                  starts here.
-                </h1>
-                <p>
-                  Spot an issue. Share it on the map.
-                  <br />
-                  Follow the progress together.
-                </p>
-                <div
-                  className="board-counts"
-                  aria-label="Community report totals"
-                >
+                <h1>{t("board.title")}</h1>
+                <p>{t("board.subtitle")}</p>
+                <div className="board-counts" aria-label={t("board.totals")}>
                   <span>
                     <strong>
-                      {loaded
-                        ? posts.filter((p) => p.status !== "resolved").length
-                        : "—"}
+                      {loaded ? openCount : t("common.notAvailable")}
                     </strong>{" "}
-                    {posts.filter((p) => p.status !== "resolved").length === 1
-                      ? "open report"
-                      : "open reports"}
+                    {tp("board.openReports", openCount)}
                   </span>
                   <span>
                     <strong>
-                      {loaded
-                        ? posts.filter((p) => p.status === "resolved").length
-                        : "—"}
+                      {loaded ? resolvedCount : t("common.notAvailable")}
                     </strong>{" "}
-                    resolved
+                    {t("board.resolvedCount")}
                   </span>
                 </div>
                 <label className="status-filter">
-                  Report status
+                  {t("board.statusFilter")}
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
-                    <option value="all">All reports</option>
-                    <option value="open">Open</option>
-                    <option value="resolved">Resolved</option>
+                    <option value="all">{t("board.statusAll")}</option>
+                    <option value="open">{t("status.openPlain")}</option>
+                    <option value="resolved">
+                      {t("status.resolvedPlain")}
+                    </option>
                   </select>
                 </label>
                 <div className="search-field">
                   <Search size={18} />
                   <input
-                    aria-label="Search reports"
+                    aria-label={t("board.search")}
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Search reports or places"
+                    placeholder={t("board.searchPlaceholder")}
                   />
                   {query && (
                     <button
-                      aria-label="Clear search"
+                      aria-label={t("board.clearSearch")}
                       onClick={() => setQuery("")}
                     >
                       <X size={16} />
@@ -680,18 +710,18 @@ export default function Board() {
                   )}
                 </div>
                 <label className="filter-label">
-                  Issue type
+                  {t("board.typeFilter")}
                   <select
-                    aria-label="Filter issue type"
+                    aria-label={t("board.typeFilterAria")}
                     value={filter}
                     onChange={(e) =>
                       setFilter(e.target.value as Category | "all")
                     }
                   >
-                    <option value="all">All issue types</option>
-                    {Object.entries(categories).map(([id, c]) => (
+                    <option value="all">{t("board.allTypes")}</option>
+                    {categoryIds.map((id) => (
                       <option key={id} value={id}>
-                        {c.label}
+                        {t(categoryKey(id))}
                       </option>
                     ))}
                   </select>
@@ -700,15 +730,15 @@ export default function Board() {
               <div className="list-bar">
                 <span>
                   {loaded
-                    ? `${visible.length} ${visible.length === 1 ? "report" : "reports"}`
-                    : "Loading reports…"}
+                    ? tp("board.reportCount", visible.length)
+                    : t("board.loadingReports")}
                 </span>
                 <button
                   className="refresh-button"
                   onClick={() => void refresh()}
-                  aria-label="Refresh reports"
+                  aria-label={t("board.refreshAria")}
                 >
-                  <RefreshCw size={14} /> Refresh
+                  <RefreshCw size={14} /> {t("common.refresh")}
                 </button>
               </div>
               {notice && (
@@ -718,17 +748,20 @@ export default function Board() {
               )}
               {error ? (
                 <div className="empty-state">
-                  <h2>We couldn’t load the board</h2>
+                  <h2>{t("board.loadErrorTitle")}</h2>
                   <p role="alert">{error}</p>
                   <button
                     className="button secondary"
                     onClick={() => void refresh()}
                   >
-                    Try again
+                    {t("common.retry")}
                   </button>
                 </div>
               ) : !loaded ? (
-                <div className="loading-list" aria-label="Loading reports">
+                <div
+                  className="loading-list"
+                  aria-label={t("board.loadingReports")}
+                >
                   <div />
                   <div />
                   <div />
@@ -738,13 +771,13 @@ export default function Board() {
                   <MapPin size={34} strokeWidth={1.3} />
                   <h2>
                     {posts.length
-                      ? "No matching reports"
-                      : "Be the first to put it on the map."}
+                      ? t("board.emptyMatchTitle")
+                      : t("board.emptyFirstTitle")}
                   </h2>
                   <p>
                     {posts.length
-                      ? "Try another search or issue type."
-                      : "A broken pavement. A blocked drain. A streetlight that’s gone dark. Start with what you see."}
+                      ? t("board.emptyMatchBody")
+                      : t("board.emptyFirstBody")}
                   </p>
                   <button
                     className="button secondary"
@@ -758,7 +791,9 @@ export default function Board() {
                         : startReport
                     }
                   >
-                    {posts.length ? "Clear filters" : "Add the first report"}
+                    {posts.length
+                      ? t("common.clearFilters")
+                      : t("board.addFirst")}
                     <Plus size={16} />
                   </button>
                 </div>
@@ -776,22 +811,22 @@ export default function Board() {
                           data-category={p.category}
                         >
                           <CategoryIcon category={p.category} size={16} />
-                          {categories[p.category].label}
+                          {t(categoryKey(p.category))}
                         </span>
                         <time>{timeAgo(p.createdAt)}</time>
                       </div>
                       <h2>{p.location.label}</h2>
                       {p.assignment.source === "deepseek" && (
                         <span className="classification-note">
-                          Auto-classified by DeepSeek
+                          {t("issue.autoClassified")}
                         </span>
                       )}
                       {p.status !== "resolved" && (
-                        <span className="status-badge">Open</span>
+                        <span className="status-badge">{t("status.open")}</span>
                       )}
                       {p.status === "resolved" && (
                         <span className="status-badge resolved">
-                          ✓ Resolved
+                          {t("status.resolved")}
                         </span>
                       )}
                       <p>{p.message}</p>
@@ -802,9 +837,9 @@ export default function Board() {
                       <div className="issue-row-bottom">
                         <span>
                           <ThumbsUp size={14} />
-                          {p.seconds} supporting
+                          {t("board.supporting", { count: p.seconds })}
                           <MessageSquare size={14} />
-                          {p.replies.length} replies
+                          {t("board.replies", { count: p.replies.length })}
                         </span>
                         <ChevronRight size={18} />
                       </div>
@@ -817,42 +852,50 @@ export default function Board() {
                   <MapPin size={21} />
                 </span>
                 <div>
-                  <strong>A small report. A shared improvement.</strong>
-                  <p>
-                    From a broken streetlight to a blocked drain, help put your
-                    neighbourhood’s needs on the map.
-                  </p>
+                  <strong>{t("board.explainerTitle")}</strong>
+                  <p>{t("board.explainerBody")}</p>
                 </div>
               </div>
             </>
           )}
           {error && selected && (
             <p className="error-message" role="alert">
-              Updates paused: {error}
+              {t("board.updatesPaused", { message: error })}
             </p>
           )}
           <footer className="panel-footer">
-            <span>Independent community platform</span>
-            <Link href="/moderation">Moderation</Link>
+            <span>{t("app.independent")}</span>
+            <Link href="/insights">{t("nav.insights")}</Link>
+            <Link href="/moderation">{t("nav.moderation")}</Link>
           </footer>
         </aside>
       </main>
       <dialog ref={flagDialog} className="dialog" aria-labelledby="flag-title">
-        <h2 id="flag-title">Flag this report?</h2>
-        <p>
-          As on the original community board, flagging removes the report and
-          its replies from public view. This cannot be undone.
-        </p>
+        <h2 id="flag-title">{t("flag.title")}</h2>
+        <p>{t("flag.body")}</p>
+        <label className="flag-reason">
+          {t("flag.reason")}
+          <select
+            value={flagReason}
+            onChange={(event) => setFlagReason(event.target.value as FlagReason)}
+          >
+            {flagReasons.map((reason) => (
+              <option key={reason} value={reason}>
+                {t(`flag.reason.${reason}` as MessageKey)}
+              </option>
+            ))}
+          </select>
+        </label>
         <div className="dialog-actions">
           <button
             className="button secondary"
             disabled={busy}
             onClick={() => flagDialog.current?.close()}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button className="button danger" disabled={busy} onClick={flag}>
-            {busy ? "Removing…" : "Flag & remove"}
+            {busy ? t("flag.submitting") : t("flag.submit")}
           </button>
         </div>
       </dialog>

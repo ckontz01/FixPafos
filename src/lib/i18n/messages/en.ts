@@ -1,0 +1,448 @@
+import type { Messages } from "./el";
+// English mirrors the Greek key set exactly; TypeScript reports any key that is
+// missing or misspelt. Several strings here are also the accessible names the
+// Playwright verification scripts assert on, so they are deliberately stable.
+export const en: Messages = {
+  "app.name": "PafosLive",
+  "app.title": "PafosLive · Your neighbourhood, on the map",
+  "app.description":
+    "A public community board for everyday issues in Pafos. Report roads, sewage, waste and other local problems, with suggested responsible services.",
+  "app.independent": "Independent community platform",
+
+  "lang.label": "Language",
+  "lang.select": "Select language",
+
+  "nav.main": "Main navigation",
+  "nav.home": "PafosLive home",
+  "nav.map": "Community map",
+  "nav.services": "Local services",
+  "nav.insights": "Insights",
+  "nav.moderation": "Moderation",
+  "nav.report": "Report an issue",
+  "nav.location": "Pafos, Cyprus",
+
+  "common.refresh": "Refresh",
+  "common.retry": "Try again",
+  "common.cancel": "Cancel",
+  "common.pleaseWait": "Please wait…",
+  "common.loading": "Loading…",
+  "common.clearFilters": "Clear filters",
+  "common.all": "All",
+  "common.yes": "Yes",
+  "common.no": "No",
+  "common.justNow": "Just now",
+  "common.minutesAgo": "{count}m ago",
+  "common.hoursAgo": "{count}h ago",
+  "common.notAvailable": "—",
+
+  "board.label": "Community board",
+  "board.kicker": "YOUR NEIGHBOURHOOD, CONNECTED",
+  "board.title": "A better Pafos starts here.",
+  "board.subtitle":
+    "Spot an issue. Share it on the map. Follow the progress together.",
+  "board.totals": "Community report totals",
+  "board.openReports.one": "open report",
+  "board.openReports.few": "open reports",
+  "board.openReports.many": "open reports",
+  "board.openReports.other": "open reports",
+  "board.resolvedCount": "resolved",
+  "board.statusFilter": "Report status",
+  "board.statusAll": "All reports",
+  "board.search": "Search reports",
+  "board.searchPlaceholder": "Search reports or places",
+  "board.clearSearch": "Clear search",
+  "board.typeFilter": "Issue type",
+  "board.typeFilterAria": "Filter issue type",
+  "board.allTypes": "All issue types",
+  "board.reportCount.one": "{count} report",
+  "board.reportCount.few": "{count} reports",
+  "board.reportCount.many": "{count} reports",
+  "board.reportCount.other": "{count} reports",
+  "board.loadingReports": "Loading reports…",
+  "board.refreshAria": "Refresh reports",
+  "board.loadErrorTitle": "We couldn’t load the board",
+  "board.updatesPaused": "Updates paused: {message}",
+  "board.emptyMatchTitle": "No matching reports",
+  "board.emptyMatchBody": "Try another search or issue type.",
+  "board.emptyFirstTitle": "Be the first to put it on the map.",
+  "board.emptyFirstBody":
+    "A broken pavement. A blocked drain. A streetlight that’s gone dark. Start with what you see.",
+  "board.addFirst": "Add the first report",
+  "board.loadMore": "Load more reports",
+  "board.explainerTitle": "A small report. A shared improvement.",
+  "board.explainerBody":
+    "From a broken streetlight to a blocked drain, help put your neighbourhood’s needs on the map.",
+  "board.supporting": "{count} supporting",
+  "board.replies": "{count} replies",
+
+  "report.backToBoard": "Community board",
+  "report.title": "What needs fixing?",
+  "report.subtitle":
+    "A clear description and an exact location help everyone understand the issue.",
+  "report.type": "Issue type",
+  "report.unsure": "I am not sure",
+  "report.autoClassifyNote":
+    "The issue type will be classified automatically and the responsible service suggested from your description and location.",
+  "report.locationChosen": "Location selected",
+  "report.locationPrompt": "Choose a spot on the map",
+  "report.locationChosenHint": "{coords} · click again to move",
+  "report.locationPromptHint":
+    "Click the exact spot, or use the map centre button.",
+  "report.landmark": "Street or nearby landmark",
+  "report.landmarkPlaceholder": "e.g. Apostolou Pavlou Avenue",
+  "report.author": "Your name or nickname",
+  "report.authorPlaceholder": "How you want to appear publicly",
+  "report.message": "What is happening?",
+  "report.messagePlaceholder":
+    "Describe the problem and what needs attention. English, Ελληνικά and Русский are welcome.",
+  "report.privacyNote":
+    "Your name, report and location will be public. Leave out phone numbers, private addresses and other personal details.",
+  "report.routingNote":
+    "We’ll suggest the responsible service automatically. Publishing here does not send an official request to the authority.",
+  "report.submit": "Publish report",
+  "report.submitting": "Checking & assigning…",
+  "report.finePrint":
+    "Reports are checked before publication. If a report is blocked, a moderator can review it.",
+  "report.published":
+    "Your report is published and visible to everyone on the map.",
+  "report.charCount": "{count}/500",
+
+  "issue.backToAll": "All reports",
+  "issue.reportedBy": "Reported {time}",
+  "issue.autoClassified": "Auto-classified",
+  "issue.suggestedService": "Suggested responsible service",
+  "issue.assignmentLow":
+    "Responsibility is unclear. A person should review the routing.",
+  "issue.assignmentAuto":
+    "Automatically assigned. Responsibility should be confirmed by the service.",
+  "issue.officialContact": "Official contact page",
+  "issue.notSent": "Not sent to the authority.",
+  "issue.support": "I see this too",
+  "issue.supported": "Supported",
+  "issue.resolvedBy": "Marked resolved by {department} · {time}",
+  "issue.photoPending": "Photo awaiting moderator review.",
+  "issue.photoAlt": "Reported issue at {location}",
+
+  "status.open": "Open",
+  "status.resolved": "✓ Resolved",
+  "status.openPlain": "Open",
+  "status.resolvedPlain": "Resolved",
+
+  "reply.heading": "Community replies",
+  "reply.empty": "Add useful details or an update from the area.",
+  "reply.author": "Your name or nickname",
+  "reply.add": "Add a reply",
+  "reply.placeholder": "Share an update…",
+  "reply.finePrint": "Replies are public and checked before publication.",
+  "reply.submit": "Post reply",
+  "reply.verified": "Verified team",
+  "reply.verifiedResolved": "Verified team · Resolved",
+  "reply.verifiedTitle": "Posted using this department’s PafosLive password",
+
+  "flag.action": "Flag inappropriate report",
+  "flag.title": "Flag this report?",
+  "flag.body":
+    "Flagging sends this report for moderator review. It does not immediately delete another citizen’s content.",
+  "flag.reason": "Reason for flagging",
+  "flag.reason.offensive": "Offensive or abusive content",
+  "flag.reason.spam": "Spam or advertising",
+  "flag.reason.personal": "Contains personal information",
+  "flag.reason.wrong": "Incorrect or misleading",
+  "flag.reason.other": "Another reason",
+  "flag.submit": "Send flag",
+  "flag.submitting": "Sending…",
+  "flag.received": "Thank you. The flag was recorded and a moderator will review it.",
+  "flag.hidden":
+    "The report was temporarily hidden from the public board and is awaiting review.",
+  "flag.alreadyFlagged": "You have already flagged this report.",
+
+  "team.panel": "Service team access",
+  "team.department": "Department",
+  "team.password": "Department password",
+  "team.verify": "Verify team",
+  "team.verified": "Department password verified",
+  "team.signOut": "Sign out",
+  "team.update": "Official update",
+  "team.postReply": "Post verified reply",
+  "team.resolve": "Mark resolved",
+  "team.notAssigned":
+    "Only the assigned department can post a verified update.",
+
+  "moderation.title": "Moderation quarantine",
+  "moderation.intro":
+    "Review submissions blocked by the profanity filter or the model. Approved items are published to the shared community board.",
+  "moderation.password": "Moderation password",
+  "moderation.open": "Open quarantine",
+  "moderation.checking": "Checking…",
+  "moderation.awaiting": "{count} awaiting review",
+  "moderation.lock": "Lock",
+  "moderation.emptyTitle": "Nothing awaiting review",
+  "moderation.emptyBody": "Blocked reports and replies will appear here.",
+  "moderation.approve": "Approve & publish",
+  "moderation.published": "Published",
+  "moderation.flagsTitle": "Flagged reports",
+  "moderation.flagsEmpty": "No flagged reports.",
+  "moderation.flagCount": "{count} flags",
+  "moderation.restore": "Restore to board",
+  "moderation.remove": "Hide permanently",
+  "moderation.clusterTitle": "Suggested duplicates",
+  "moderation.clusterEmpty": "No pending clustering suggestions.",
+  "moderation.clusterConfirm": "Confirm link",
+  "moderation.clusterSeparate": "Separate",
+
+  "photo.label": "Photo (optional)",
+  "photo.choose": "Choose photo",
+  "photo.remove": "Remove photo",
+  "photo.hint": "JPEG, PNG or WebP, up to 4 MB. Location data is removed.",
+  "photo.approved": "Photo · approved",
+  "photo.rejected": "Photo · rejected",
+  "photo.pending": "Photo · pending",
+  "photo.approve": "Approve photo",
+  "photo.reject": "Reject photo",
+  "photo.view": "View private photo",
+  "photo.reviewTitle": "Photo review",
+
+  "severity.label": "Severity",
+  "severity.critical": "Critical",
+  "severity.high": "High",
+  "severity.medium": "Medium",
+  "severity.low": "Low",
+  "severity.advisory":
+    "Model estimate to help prioritisation. Not an official municipal decision.",
+  "severity.why": "Why this estimate?",
+  "severity.slaSuggested": "Suggested response window: {window}",
+  "severity.sla.critical": "within 4 hours",
+  "severity.sla.high": "within 2 working days",
+  "severity.sla.medium": "within 10 working days",
+  "severity.sla.low": "within 30 working days",
+  "severity.needsReview": "Needs human review",
+  "severity.factor.danger": "Immediate danger to people",
+  "severity.factor.infrastructure": "Infrastructure impact",
+  "severity.factor.accessibility": "Accessibility impact",
+  "severity.factor.traffic": "Traffic disruption",
+  "severity.factor.environment": "Environmental impact",
+  "severity.factor.people": "Number of citizens affected",
+  "severity.factor.escalation": "Risk of escalation",
+  "severity.factor.recurrence": "Recurring problem",
+
+  "cluster.label": "Linked reports",
+  "cluster.count.one": "{count} citizen report",
+  "cluster.count.few": "{count} citizen reports",
+  "cluster.count.many": "{count} citizen reports",
+  "cluster.count.other": "{count} citizen reports",
+  "cluster.explain":
+    "These reports appear to describe the same physical issue. Every report is preserved separately.",
+  "cluster.why": "Why were these linked?",
+  "cluster.distance": "{metres} m apart",
+  "cluster.pendingReview": "Possible duplicate — awaiting review",
+  "cluster.separated": "Separated by a moderator",
+  "cluster.viewOriginal": "View original report",
+
+  "insights.title": "Operational insights",
+  "insights.subtitle":
+    "An operational view of public reports in Pafos. Every number comes from real database data.",
+  "insights.demoBanner":
+    "Showing demonstration data. These are not real citizen reports.",
+  "insights.totalReports": "Total reports",
+  "insights.activeIssues": "Active issues",
+  "insights.resolvedIssues": "Resolved",
+  "insights.resolutionRate": "Resolution rate",
+  "insights.avgResolution": "Average resolution time",
+  "insights.medianResolution": "Median resolution time",
+  "insights.byCategory": "Reports by category",
+  "insights.byDepartment": "Reports by department",
+  "insights.byStatus": "Reports by status",
+  "insights.bySeverity": "Reports by severity",
+  "insights.overTime": "Reports over time",
+  "insights.hotspots": "Geographic hotspots",
+  "insights.recurring": "Recurring locations",
+  "insights.clusters": "Duplicate cluster sizes",
+  "insights.departmentPerformance": "Department response performance",
+  "insights.seasonal": "Seasonal patterns",
+  "insights.filters": "Filters",
+  "insights.dateFrom": "From",
+  "insights.dateTo": "To",
+  "insights.noData": "Not enough data for this period.",
+  "insights.export": "Export CSV",
+  "insights.exportDigest": "Department digest",
+  "insights.days": "{count} days",
+  "insights.hours": "{count} hours",
+  "insights.reportsUnit": "reports",
+  "insights.openLink": "Open insights",
+
+
+  "map.label": "Public issue map of Pafos",
+  "map.pickPrompt": "Click the map to place your report",
+  "map.tagline": "Your neighbourhood, on the map",
+  "map.loading": "Loading Pafos streets…",
+  "map.opening": "Opening the Pafos map…",
+  "map.moveToPafos": "Move the map to Pafos before choosing a location.",
+  "map.noGeolocation":
+    "Your browser does not support location. Choose a point on the map.",
+  "map.outsideArea":
+    "You are outside the Pafos reporting area. Choose a point on the map.",
+  "map.locationUnavailable":
+    "Location access was unavailable. You can choose a point on the map.",
+  "map.useMyLocation": "Use my location",
+  "map.reset": "Reset Pafos map",
+  "map.dismiss": "Dismiss map message",
+  "map.panHint": "Pan or zoom to the exact spot.",
+  "map.useCentre": "Use map centre",
+  "map.publicReports.one": "{count} public report on this map",
+  "map.publicReports.few": "{count} public reports on this map",
+  "map.publicReports.many": "{count} public reports on this map",
+  "map.publicReports.other": "{count} public reports on this map",
+  "map.selectPin": "Select a pin to read",
+  "map.resolvedPrefix": "Resolved · ",
+
+
+  "team.access": "Team access",
+  "team.replyPlaceholder": "Explain what your team has done or will do…",
+  "team.resolvedState": "Resolved",
+  "team.updateHint":
+    "Add an update before resolving. Verified replies pass the same moderation checks as community replies.",
+  "team.signOutFull": "Sign out of team access",
+  "team.otherTeam":
+    "You are verified as {department}. This issue belongs to another team.",
+  "team.eligibility":
+    "For authorized representatives with a password issued by PafosLive. Verification confirms department access on this platform, not employment.",
+  "team.replyNotice": "Verified reply published.",
+  "team.resolveNotice": "Issue marked resolved. Your update is public.",
+  "team.unavailable": "Team verification is temporarily unavailable.",
+
+  "photo.previewAlt": "Selected photo preview",
+  "photo.pickerHint":
+    "JPEG, PNG or WebP, up to 4 MB. Your photo is checked automatically against the report. Clear, relevant and safe photos are approved automatically; others stay private for moderator review. Avoid faces, number plates and personal information.",
+  "photo.invalidChoice": "Choose a JPEG, PNG or WebP photo up to 4 MB.",
+  "photo.noneToReview": "No photos to review.",
+
+
+  "moderation.photoIntro":
+    "Clearly relevant, safe photos are approved automatically. Uncertain, irrelevant, inappropriate or privacy-sensitive photos and failed automatic checks stay private here, with pending reviews first. Check the image before approving. Photos only become public when their report is also published.",
+  "moderation.refreshPhotos": "Refresh photos",
+  "moderation.quarantineMeta": "{type} · {status} · {blockedBy} / {category}",
+  "photo.awaitingAlt": "Photo awaiting moderation",
+  "photo.autoApproved": "Auto-approved. ",
+  "photo.reviewedByModerator": "Reviewed by a moderator. ",
+  "photo.needsReview": "Needs moderator review. ",
+  "photo.aiAssessment": "AI assessment: {category} ({confidence} confidence). ",
+  "photo.noAssessment": "No automatic assessment is available for this photo.",
+
+  "a11y.skipToContent": "Skip to content",
+  "a11y.mapLabel": "Interactive map of Pafos reports",
+  "a11y.mapAlternative": "Report list (map alternative)",
+  "a11y.useMapCentre": "Use map centre",
+  "a11y.locateMe": "Find my location",
+  "a11y.selectedIssue": "Selected report: {title}",
+
+  "voice.start": "Dictate report",
+  "voice.stop": "Stop dictation",
+  "voice.listening": "Listening…",
+  "voice.review":
+    "Check and correct the text before submitting. Nothing is submitted automatically.",
+  "voice.unsupported": "Dictation is not supported in this browser.",
+  "voice.error": "Dictation did not complete. Try again or type instead.",
+
+  "offline.queued":
+    "You are offline. The report was stored on this device and has not been submitted yet.",
+  "offline.pending.one": "{count} report waiting to send",
+  "offline.pending.few": "{count} reports waiting to send",
+  "offline.pending.many": "{count} reports waiting to send",
+  "offline.pending.other": "{count} reports waiting to send",
+  "offline.sending": "Sending pending reports…",
+  "offline.sent": "Pending reports were submitted.",
+  "offline.notSubmitted": "Not submitted yet",
+  "offline.discard": "Discard",
+
+  "translation.original": "Original citizen text",
+  "translation.machine": "Machine translation",
+  "translation.showOriginal": "Show original",
+  "translation.showTranslation": "Show translation",
+  "translation.notice":
+    "Machine translation for service use. The original citizen text prevails.",
+  "translation.detected": "Report language: {language}",
+
+  "demo.banner":
+    "Demonstration mode: data is sample data and automatic checks may run locally.",
+  "demo.aiUnavailable":
+    "The model service is unavailable. A deterministic fallback classification is used and labelled as such.",
+  "demo.seeded": "Demonstration data",
+
+  "category.roads": "Roads & pavements",
+  "category.sewage": "Sewage & drainage",
+  "category.water": "Water supply",
+  "category.waste": "Waste & cleaning",
+  "category.lighting": "Street lighting",
+  "category.parks": "Parks & green spaces",
+  "category.traffic": "Traffic & parking",
+  "category.other": "Other local issue",
+
+  "department.technical": "Pafos Municipality · Technical Services",
+  "department.sewerage": "EOA Pafos · Sewerage & Drainage",
+  "department.water": "EOA Pafos · Water Supply",
+  "department.cleaning": "Pafos Municipality · Cleaning Service",
+  "department.green": "Pafos Municipality · Green Service",
+  "department.traffic": "Pafos Municipality · Traffic Service",
+  "department.health": "Pafos Municipality · Health Service",
+  "department.review": "Pafos Municipality · General enquiries",
+
+  "departmentRemit.technical":
+    "Municipal roads, potholes, pavements, accessibility, public infrastructure and municipal street lighting. Major highways may need referral to Public Works.",
+  "departmentRemit.sewerage":
+    "Public sewer blockages, sewage leaks, wastewater and stormwater network faults.",
+  "departmentRemit.water":
+    "Public water supply leaks, interrupted supply and water network faults.",
+  "departmentRemit.cleaning":
+    "Missed bin collections, litter, illegal dumping and street cleaning.",
+  "departmentRemit.green":
+    "Municipal parks, trees, overgrown vegetation and green spaces.",
+  "departmentRemit.traffic":
+    "Municipal parking and local traffic complaints. Road construction goes to Technical Services.",
+  "departmentRemit.health":
+    "Public hygiene, pests and sanitation complaints other than public sewer faults.",
+  "departmentRemit.review":
+    "Unclear, mixed, private-property or outside-jurisdiction issues requiring human routing. No claim of confirmed responsibility.",
+
+  "services.kicker": "KNOW WHO TO CONTACT",
+  "services.title": "Local services.",
+  "services.subtitle": "Find the team that looks after your neighbourhood.",
+  "services.note":
+    "Reports receive a suggested service. For an official request, contact the authority directly.",
+  "services.disclaimer":
+    "Official authority logos identify each service. PafosLive is an independent community platform.",
+
+  "error.generic": "The request failed. Please try again.",
+  "error.unavailable":
+    "The community board is temporarily unavailable. Please try again.",
+  "error.crossOrigin": "The request was rejected.",
+  "error.invalidReport":
+    "Add a name (up to 40 characters), a report (up to 500), a category and a location in the Pafos area.",
+  "error.invalidReply": "Add a name and a reply up to 500 characters.",
+  "error.invalidIssue": "Invalid issue.",
+  "error.notFound": "Issue not found.",
+  "error.rateLimited": "Too many submissions. Please wait a minute.",
+  "error.rateLimitedFlag": "Please wait a minute before flagging again.",
+  "error.rateLimitedVote": "Please wait a minute before voting again.",
+  "error.rateLimitedLogin":
+    "Too many verification attempts. Try again in 15 minutes.",
+  "error.moderationBlocked":
+    "This report was not published because it may contain inappropriate content. It was saved for moderator review.",
+  "error.moderationBlockedReply":
+    "This reply was not published because it may contain inappropriate content. It was saved for moderator review.",
+  "error.moderationUnavailable":
+    "This could not be checked right now. Please try again.",
+  "error.assignmentUnavailable":
+    "Department assignment is temporarily unavailable. Your report has not been published; please try again.",
+  "error.photoTooLarge": "Choose a photo smaller than 4 MB.",
+  "error.photoInvalid":
+    "Choose a valid JPEG, PNG or WebP photo, up to 4 MB and 25 megapixels.",
+  "error.teamUnauthorized": "Verify your department first.",
+  "error.teamForbidden":
+    "Only the assigned department can give a verified update or resolve this issue.",
+  "error.teamBadPassword": "Incorrect department password.",
+  "error.alreadyResolved": "This issue is already resolved.",
+  "error.conflict": "The issue changed. Refresh before trying again.",
+  "error.moderationPassword": "Incorrect moderation password.",
+  "error.moderationNotConfigured": "Moderation access is not configured.",
+  "error.updateLength": "Add an update of 1–500 characters.",
+};

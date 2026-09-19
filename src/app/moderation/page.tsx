@@ -4,7 +4,10 @@ import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import type { QuarantineItem } from "@/lib/issues";
 import PhotoModeration from "@/components/photo-moderation";
+import { useI18n } from "@/components/i18n-provider";
+import { isMessageKey } from "@/lib/i18n";
 export default function Moderation() {
+  const { t } = useI18n();
   const [password, setPassword] = useState(""),
     [items, setItems] = useState<QuarantineItem[] | null>(null),
     [error, setError] = useState(""),
@@ -16,7 +19,8 @@ export default function Moderation() {
       body: JSON.stringify({ password, action, id }),
     });
     const result = await res.json();
-    if (!res.ok) throw new Error(result.error);
+    if (!res.ok)
+      throw new Error(isMessageKey(result.code) ? t(result.code) : result.error);
     return result;
   }
   async function load(e?: FormEvent) {
@@ -46,18 +50,15 @@ export default function Moderation() {
   return (
     <main className="moderation-page">
       <Link className="back-link" href="/">
-        <ArrowLeft size={17} /> PafosLive
+        <ArrowLeft size={17} /> {t("app.name")}
       </Link>
       <ShieldCheck size={32} />
-      <h1>Moderation quarantine</h1>
-      <p>
-        Review submissions blocked by the profanity filter or DeepSeek. Approved
-        items are published to the shared community board.
-      </p>
+      <h1>{t("moderation.title")}</h1>
+      <p>{t("moderation.intro")}</p>
       {items === null ? (
         <form className="admin-login" onSubmit={load}>
           <label>
-            Moderation password
+            {t("moderation.password")}
             <input
               type="password"
               required
@@ -67,22 +68,23 @@ export default function Moderation() {
             />
           </label>
           <button className="button" disabled={busy}>
-            {busy ? "Checking…" : "Open quarantine"}
+            {busy ? t("moderation.checking") : t("moderation.open")}
           </button>
         </form>
       ) : (
         <>
           <div className="moderation-toolbar">
             <span>
-              {items.filter((i) => i.status === "pending").length} awaiting
-              review
+              {t("moderation.awaiting", {
+                count: items.filter((i) => i.status === "pending").length,
+              })}
             </span>
             <button
               className="button secondary"
               disabled={busy}
               onClick={() => void load()}
             >
-              Refresh
+              {t("common.refresh")}
             </button>
             <button
               className="button secondary"
@@ -92,20 +94,25 @@ export default function Moderation() {
               }}
               disabled={busy}
             >
-              Lock
+              {t("moderation.lock")}
             </button>
           </div>
           {items.length === 0 && (
             <div className="empty-state">
-              <h2>Nothing awaiting review</h2>
-              <p>Blocked reports and replies will appear here.</p>
+              <h2>{t("moderation.emptyTitle")}</h2>
+              <p>{t("moderation.emptyBody")}</p>
             </div>
           )}
           <PhotoModeration password={password} />
           {items.map((i) => (
             <article className="quarantine-item" key={i.id}>
               <span className="small-label">
-                {i.submissionType} · {i.status} · {i.blockedBy} / {i.category}
+                {t("moderation.quarantineMeta", {
+                  type: i.submissionType,
+                  status: i.status,
+                  blockedBy: i.blockedBy,
+                  category: i.category,
+                })}
               </span>
               <h2>{i.submission.author}</h2>
               <p>{i.submission.message}</p>
@@ -118,10 +125,10 @@ export default function Moderation() {
                 onClick={() => void publish(i.id)}
               >
                 {i.status === "published"
-                  ? "Published"
+                  ? t("moderation.published")
                   : busy
-                    ? "Please wait…"
-                    : "Approve & publish"}
+                    ? t("common.pleaseWait")
+                    : t("moderation.approve")}
               </button>
             </article>
           ))}

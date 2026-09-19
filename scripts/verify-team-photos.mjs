@@ -6,6 +6,9 @@ import postgres from "postgres";
 import sharp from "sharp";
 import { del } from "@vercel/blob";
 const base = process.env.TEST_BASE_URL || "http://localhost:3107";
+// These assertions match English accessible names, so the interface
+// language is pinned explicitly instead of being negotiated per machine.
+const withLang = (url) => url + (url.includes("?") ? "&" : "?") + "lang=en";
 if (!/^https?:\/\/(localhost:3107|pafoslive[^/]*\.vercel\.app)$/.test(base))
   throw new Error("PafosLive only");
 const credentials = await readFile("docs/team-access.private.txt", "utf8");
@@ -47,7 +50,7 @@ try {
   })
     .jpeg()
     .toFile("outputs/qa-photo.jpg");
-  await page.goto(base);
+  await page.goto(withLang(base));
   await page
     .getByRole("button", { name: "Report an issue", exact: true })
     .click();
@@ -198,7 +201,7 @@ try {
   console.log(
     "PASS team reply moderation; resolution and verified reply saved together",
   );
-  await other.goto(`${base}/?issue=${issueId}`);
+  await other.goto(withLang(`${base}/?issue=${issueId}`));
   await other.locator(".status-badge.resolved").waitFor();
   await other.locator(".issue-pin.resolved").filter({ hasText: author }).waitFor();
   assert.ok(
@@ -215,7 +218,7 @@ try {
     ).status,
     401,
   );
-  await page.goto(base + "/moderation");
+  await page.goto(withLang(base + "/moderation"));
   await page
     .getByLabel("Moderation password")
     .fill(process.env.FEEDBACK_ADMIN_PASSWORD);
