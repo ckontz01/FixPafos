@@ -1,9 +1,11 @@
 import { listIssues, type IssueQuery } from "@/lib/db";
 import { parseIssue, validId } from "@/lib/validation";
 import { moderateFeedback } from "@/lib/feedback-moderation";
-import { assignIssue } from "@/lib/assignment";
+import { classifyIssue } from "@/lib/assignment";
 import { fail, handle, json, limited } from "@/lib/http";
 import { PhotoInputError, reportInput, saveReport } from "@/lib/photos";
+import { applyCluster, detectDuplicate } from "@/lib/duplicates";
+import { db, type Sql } from "@/lib/db";
 import {
   categories,
   severityLevels,
@@ -112,11 +114,41 @@ export function POST(request: Request) {
     }
     if (decision.status === "unavailable")
       return fail("error.moderationUnavailable", 503);
-    const assignment = await assignIssue(issue);
-    if (!assignment) return fail("error.assignmentUnavailable", 503);
-    issue.assignment = assignment;
-    issue.category = assignment.category;
+    const classification = await classifyIssue(issue);
+    if (!classification) return fail("error.assignmentUnavailable", 503);
+    issue.assignment = classification.assignment;
+    issue.category = classification.assignment.category;
+    issue.severity = classification.severity;
+
+    // Duplicate detection runs after classification, because the category it
+    // produces is one of the matching signals. A failure here must never block
+    // publication: the report is valid either way, it simply stays an
+    // independent case. Detection and linking are therefore separate from the
+    // save, which happens exactly once on every path.
+    let duplicate = null;
+    try {
+      duplicate = await detectDuplicate(db() as unknown as Sql, issue);
+      if (duplicate) issue.cluster = duplicate.link;
+    } catch (error) {
+      console.error(
+        "Duplicate detection could not complete:",
+        error instanceof Error ? error.message : "unknown error",
+      );
+    }
+
     await saveReport(issue, submission.photo);
+
+    if (duplicate) {
+      try {
+        await applyCluster(db() as unknown as Sql, issue, duplicate);
+      } catch (error) {
+        // The report is already published; only the cluster bookkeeping failed.
+        console.error(
+          "Cluster link could not be recorded:",
+          error instanceof Error ? error.message : "unknown error",
+        );
+      }
+    }
     return json({ post: issue }, 201);
   });
 }

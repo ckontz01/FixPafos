@@ -69,6 +69,8 @@ ALTER TABLE pafos_issues
     GENERATED ALWAYS AS (data->'cluster'->>'clusterId') STORED,
   ADD COLUMN IF NOT EXISTS cluster_role text
     GENERATED ALWAYS AS (data->'cluster'->>'role') STORED,
+  ADD COLUMN IF NOT EXISTS cluster_status text
+    GENERATED ALWAYS AS (data->'cluster'->>'status') STORED,
   ADD COLUMN IF NOT EXISTS report_language text
     GENERATED ALWAYS AS (data->'translation'->>'detected') STORED,
   ADD COLUMN IF NOT EXISTS is_demo boolean
