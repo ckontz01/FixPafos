@@ -190,14 +190,48 @@ try {
   await other.getByLabel("Search reports").fill("impossible-search-phrase");
   assert.equal(await other.locator(".issue-pin").count(), 0);
   assert.deepEqual(errors, []);
-  const flag = await api(`/api/issues/${id}/flag`, {});
-  assert.equal(flag.status, 204);
+  // Flagging requests review; it does not delete. One person cannot remove
+  // another citizen's report, so a single flag must leave it published.
+  const firstFlag = await api(`/api/issues/${id}/flag`, {
+    reason: "spam",
+    voterId: "verify-voter-one",
+  });
+  assert.ok([200, 201].includes(firstFlag.status), JSON.stringify(firstFlag));
+  assert.equal(firstFlag.data.hidden, false);
+  assert.ok(
+    (await api("/api/issues")).data.posts.some((p) => p.id === id),
+    "one flag must not withdraw a report",
+  );
+
+  // The same person flagging repeatedly must not reach the threshold alone.
+  const repeat = await api(`/api/issues/${id}/flag`, {
+    reason: "spam",
+    voterId: "verify-voter-one",
+  });
+  assert.equal(repeat.data.flagCount, 1);
+  assert.equal(repeat.data.alreadyFlagged, true);
+
+  // Enough distinct people hides it for review; the report itself survives.
+  let hidden = false;
+  for (let i = 2; i <= 6 && !hidden; i += 1) {
+    const flag = await api(`/api/issues/${id}/flag`, {
+      reason: "offensive",
+      voterId: `verify-voter-${i}`,
+    });
+    hidden = Boolean(flag.data.hidden);
+  }
+  assert.ok(hidden, "distinct flags should withdraw the report for review");
   assert.ok(!(await api("/api/issues")).data.posts.some((p) => p.id === id));
+  const [retained] = await sql`SELECT hidden_at FROM pafos_issues WHERE id=${id}`;
+  assert.ok(retained, "a flagged report must be hidden, never deleted");
+  assert.ok(Number(retained.hidden_at) > 0);
+
   console.log(
-    "PASS matching map/list filters, flag removal, no browser runtime errors",
+    "PASS matching map/list filters, flag review without deletion, no browser runtime errors",
   );
 } finally {
   await browser.close();
+  await sql`DELETE FROM pafos_flags WHERE issue_id IN (SELECT id FROM pafos_issues WHERE data->>'author'=${author})`;
   await sql`DELETE FROM pafos_issues WHERE data->>'author'=${author}`;
   await sql`DELETE FROM pafos_quarantine WHERE submission->>'author'=${author}`;
   await sql.end();
