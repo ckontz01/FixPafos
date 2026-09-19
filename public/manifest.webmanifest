@@ -1,0 +1,22 @@
+{
+  "name": "PafosLive",
+  "short_name": "PafosLive",
+  "description": "Report everyday municipal issues in Pafos on a shared public map.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f7f5ef",
+  "theme_color": "#f7f5ef",
+  "lang": "el",
+  "dir": "ltr",
+  "categories": ["government", "utilities"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

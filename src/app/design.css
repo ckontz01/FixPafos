@@ -929,6 +929,130 @@ label {
   }
 }
 
+/* --- Export panel ---------------------------------------------------------- */
+.export-panel h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-stack-display);
+  font-size: 17px;
+  letter-spacing: -0.03em;
+  margin: var(--space-xl) 0 var(--space-sm);
+}
+.export-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+  max-width: 24rem;
+  margin-bottom: var(--space-sm);
+}
+.export-panel select {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  color: var(--ink);
+  font-family: var(--font-stack-body);
+  font-size: 13px;
+  min-height: 40px;
+  padding: 0 8px;
+}
+
+/* --- Voice input ----------------------------------------------------------- */
+.voice-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: -4px;
+}
+.voice-input .button {
+  align-self: flex-start;
+}
+.voice-input .button.listening {
+  background: var(--accent);
+  color: var(--logo-paper);
+}
+/* A ring, not only a colour change, so the recording state is not carried by
+ * hue alone for colour-blind or high-contrast users. */
+.voice-input .button.listening::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 2px solid var(--accent);
+}
+.voice-input .button {
+  position: relative;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .voice-input .button.listening::after {
+    animation: voice-pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes voice-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+}
+
+/* --- Offline queue --------------------------------------------------------- */
+.offline-queue {
+  margin: 0 var(--space-lg) var(--space-md);
+  padding: var(--space-md);
+  background: var(--warm-surface);
+  border-radius: var(--radius-card);
+  color: var(--warm-ink);
+}
+.offline-queue h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-stack-display);
+  font-size: 14px;
+  margin: 0 0 4px;
+}
+.offline-queue .fine-print {
+  color: var(--warm-ink);
+}
+.offline-queue ul {
+  list-style: none;
+  margin: var(--space-sm) 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.offline-queue li {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+.offline-queue li > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.offline-queue strong {
+  font-size: 13px;
+}
+.offline-queue .muted {
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+/* Names the state in words, so "waiting" is never inferred from styling alone. */
+.pending-tag {
+  align-self: flex-start;
+  background: var(--warm-ink);
+  color: var(--logo-paper);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 650;
+}
+
 /* --- Severity and cluster panels ------------------------------------------- */
 .severity-panel,
 .cluster-panel {

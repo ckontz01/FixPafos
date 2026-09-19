@@ -5,6 +5,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import "./globals.css";
 import "./design.css";
 import { I18nProvider } from "@/components/i18n-provider";
+import ServiceWorkerRegistration from "@/components/service-worker";
 import {
   LOCALE_COOKIE,
   LOCALE_TAGS,
@@ -70,7 +71,10 @@ export default async function Layout({
       className={`${body.variable} ${display.variable} ${coverage.variable}`}
     >
       <body>
-        <I18nProvider initialLocale={locale}>{children}</I18nProvider>
+        <I18nProvider initialLocale={locale}>
+          {children}
+          <ServiceWorkerRegistration />
+        </I18nProvider>
       </body>
     </html>
   );

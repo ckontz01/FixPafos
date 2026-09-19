@@ -41,6 +41,9 @@ import CategoryIcon from "./category-icon";
 import ServicesDirectory from "./services-directory";
 import LanguageSwitcher from "./language-switcher";
 import { SeverityPanel, ClusterPanel } from "./issue-signals";
+import OfflineQueue from "./offline-queue";
+import VoiceInput from "./voice-input";
+import { queueReport } from "@/lib/outbox";
 import { useI18n } from "./i18n-provider";
 import { isMessageKey, type MessageKey } from "@/lib/i18n";
 import type { IssueCursor, IssuePage } from "@/lib/db";
@@ -116,6 +119,7 @@ export default function Board() {
   const [busy, setBusy] = useState(false),
     [reply, setReply] = useState(""),
     [formError, setFormError] = useState("");
+  const [queueVersion, setQueueVersion] = useState(0);
   const [cursor, setCursor] = useState<IssueCursor | null>(null),
     [loadingMore, setLoadingMore] = useState(false),
     [debouncedQuery, setDebouncedQuery] = useState("");
@@ -267,7 +271,32 @@ export default function Board() {
       const payload = new FormData();
       payload.append("report", JSON.stringify(report));
       if (photo) payload.append("photo", photo);
-      const result = await request<{ post: Issue }>("/api/issues", payload);
+
+      let result: { post: Issue };
+      try {
+        result = await request<{ post: Issue }>("/api/issues", payload);
+      } catch (error) {
+        // A transport failure means the report never reached the server. Keep
+        // it on the device and say so plainly, rather than losing what the
+        // person wrote or implying it was filed.
+        if (error instanceof TypeError || !navigator.onLine) {
+          const queued = await queueReport({
+            report,
+            photo: photo ?? undefined,
+          });
+          if (queued) {
+            setMode("board");
+            setMessage("");
+            setPhoto(null);
+            setDraft(undefined);
+            setLocationLabel("");
+            setNotice(t("offline.queued"));
+            setQueueVersion((v) => v + 1);
+            return;
+          }
+        }
+        throw error;
+      }
       setPosts((p) => [result.post, ...p]);
       setLoaded(true);
       setSelectedId(result.post.id);
@@ -505,6 +534,16 @@ export default function Board() {
                     {t("report.charCount", { count: message.length })}
                   </span>
                 </label>
+                <VoiceInput
+                  disabled={busy}
+                  onTranscript={(text) =>
+                    // Appended for the person to read and correct. Dictation
+                    // fills the field; it never submits.
+                    setMessage((current) =>
+                      (current ? `${current} ${text}` : text).slice(0, 500),
+                    )
+                  }
+                />
                 <PhotoPicker file={photo} onChange={setPhoto} disabled={busy} />
                 <p className="privacy-note">{t("report.privacyNote")}</p>
                 <div className="routing-note">
@@ -782,6 +821,13 @@ export default function Board() {
                   </select>
                 </label>
               </div>
+              <OfflineQueue
+                key={queueVersion}
+                onSent={() => {
+                  setQueueVersion((v) => v + 1);
+                  void refresh();
+                }}
+              />
               <div className="list-bar">
                 <span>
                   {loaded

@@ -6,6 +6,7 @@ import type { QuarantineItem } from "@/lib/issues";
 import PhotoModeration from "@/components/photo-moderation";
 import FlagReview from "@/components/flag-review";
 import ClusterReview from "@/components/cluster-review";
+import ExportPanel from "@/components/export-panel";
 import { useI18n } from "@/components/i18n-provider";
 import { isMessageKey } from "@/lib/i18n";
 export default function Moderation() {
@@ -105,6 +106,7 @@ export default function Moderation() {
               <p>{t("moderation.emptyBody")}</p>
             </div>
           )}
+          <ExportPanel password={password} />
           <FlagReview password={password} />
           <ClusterReview password={password} />
           <PhotoModeration password={password} />
