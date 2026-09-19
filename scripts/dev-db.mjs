@@ -13,8 +13,15 @@ import { mkdir } from "node:fs/promises";
  * never imported by application code and never used in deployment, where
  * DATABASE_URL points at the managed Postgres instance.
  *
- *   node scripts/dev-db.mjs
+ *   npm run dev:db
+ *   DATABASE_URL=postgres://postgres@127.0.0.1:5433/postgres npm run seed:demo
  *   DATABASE_URL=postgres://postgres@127.0.0.1:5433/postgres npm run dev
+ *
+ * IMPORTANT: this server accepts a SINGLE client connection at a time, because
+ * PGlite is one in-process database rather than a pool. Run the seed script
+ * before starting the dev server, not alongside it, or the second client is
+ * dropped with ECONNRESET. lib/db.ts already pins the pool to one connection
+ * for loopback URLs for the same reason. Hosted Postgres has no such limit.
  */
 const PORT = Number(process.env.DEV_DB_PORT ?? 5433);
 const DATA_DIR = process.env.DEV_DB_DIR ?? ".pglite";

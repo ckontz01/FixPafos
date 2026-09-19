@@ -96,6 +96,7 @@ function toIssue(row: Record<string, unknown>): Issue {
     ...data,
     status: data.status ?? "open",
     seconds: Number(row.seconds ?? 0),
+    clusterSize: Number(row.cluster_size ?? 0) || undefined,
     replies: (row.replies ?? []) as Reply[],
     photo: row.photo_status
       ? {
@@ -161,7 +162,8 @@ export async function listIssuesWith(
       photo.status AS photo_status,
       COALESCE(votes.total, 0) AS seconds,
       COALESCE(votes.mine, false) AS seconded,
-      COALESCE(replies.items, '[]'::jsonb) AS replies
+      COALESCE(replies.items, '[]'::jsonb) AS replies,
+      COALESCE(cluster.size, 0) AS cluster_size
     FROM page
     LEFT JOIN pafos_photos photo ON photo.issue_id = page.id
     LEFT JOIN LATERAL (
@@ -173,6 +175,16 @@ export async function listIssuesWith(
       SELECT jsonb_agg(r.data ORDER BY r.created_at) AS items
       FROM pafos_replies r WHERE r.issue_id = page.id
     ) replies ON true
+    -- How many citizen reports this cluster holds, so the detail view can say
+    -- how many people reported the same thing. Bounded to the page, like the
+    -- other laterals.
+    LEFT JOIN LATERAL (
+      SELECT count(*)::int AS size
+      FROM pafos_issues c
+      WHERE c.hidden_at IS NULL
+        AND c.cluster_id = page.data->'cluster'->>'clusterId'
+        AND COALESCE(c.cluster_status, '') <> 'separated'
+    ) cluster ON page.data->'cluster'->>'clusterId' IS NOT NULL
     ORDER BY page.created_at DESC, page.data->>'id' DESC`;
 
   const hasMore = rows.length > limit;
@@ -189,18 +201,6 @@ export async function listIssuesWith(
         ? { createdAt: Number(last.created_at), id: (last.data as Issue).id }
         : null,
   };
-}
-
-export async function getIssue(id: string): Promise<Issue | null> {
-  const sql = asSql(db());
-  const [row] =
-    await sql`SELECT data FROM pafos_issues WHERE id=${id} AND hidden_at IS NULL`;
-  return row ? (row.data as Issue) : null;
-}
-
-export async function insertIssue(issue: Issue) {
-  const sql = asSql(db());
-  await sql`INSERT INTO pafos_issues(id,data,created_at) VALUES(${issue.id},${sql.json(issue)},${issue.createdAt})`;
 }
 
 export async function issueExists(id: string) {

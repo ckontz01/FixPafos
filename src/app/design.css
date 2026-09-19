@@ -929,6 +929,159 @@ label {
   }
 }
 
+/* --- Severity and cluster panels ------------------------------------------- */
+.severity-panel,
+.cluster-panel {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-card);
+  padding: var(--space-md);
+  margin: var(--space-md) 0;
+}
+.severity-panel .small-label,
+.cluster-panel .small-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.severity-level {
+  display: block;
+  font-family: var(--font-stack-display);
+  font-size: 19px;
+  letter-spacing: -0.03em;
+  margin: 4px 0 2px;
+}
+/* The bar restates the level positionally, so severity is never colour alone. */
+.severity-panel {
+  border-left: 4px solid var(--chart-severity-low);
+}
+.severity-panel[data-severity="medium"] {
+  border-left-color: var(--chart-severity-medium);
+}
+.severity-panel[data-severity="high"] {
+  border-left-color: var(--chart-severity-high);
+}
+.severity-panel[data-severity="critical"] {
+  border-left-color: var(--chart-severity-critical);
+}
+.severity-sla {
+  font-size: 12px;
+  color: var(--secondary);
+  margin: 0 0 var(--space-sm);
+}
+.severity-factors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-sm);
+}
+.severity-factors li {
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--secondary);
+}
+.needs-review {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--warm-ink);
+  font-weight: 550;
+}
+.cluster-panel strong {
+  display: block;
+  font-family: var(--font-stack-display);
+  font-size: 17px;
+  margin: 4px 0 6px;
+}
+.cluster-panel p {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--secondary);
+  margin: 0 0 6px;
+}
+.severity-chip {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 3px 9px;
+  margin-right: 6px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--logo-paper);
+  background: var(--chart-severity-low);
+}
+.severity-chip[data-severity="medium"] {
+  background: var(--chart-severity-medium);
+}
+.severity-chip[data-severity="high"] {
+  background: var(--chart-severity-high);
+}
+.severity-chip[data-severity="critical"] {
+  background: var(--chart-severity-critical);
+}
+
+/* --- Moderation queues ----------------------------------------------------- */
+.flag-review h2,
+.cluster-review h2,
+.photo-review h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-stack-display);
+  font-size: 17px;
+  letter-spacing: -0.03em;
+  margin: var(--space-xl) 0 var(--space-sm);
+}
+.flag-reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: var(--space-sm) 0;
+}
+.flag-reasons li {
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--secondary);
+}
+.cluster-pair {
+  display: grid;
+  gap: var(--space-md);
+  margin: var(--space-sm) 0;
+}
+.cluster-pair > div {
+  background: var(--surface);
+  border-radius: var(--radius-control);
+  padding: var(--space-md);
+  min-width: 0;
+}
+.cluster-pair strong {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+.cluster-pair p {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.cluster-pair .muted {
+  font-size: 11px;
+}
+@media (min-width: 40rem) {
+  .cluster-pair {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* --- Insights dashboard ---------------------------------------------------- */
 .insights-page {
   max-width: 1180px;

@@ -397,6 +397,28 @@ export async function reviewClusterWith(
   });
 }
 
+/**
+ * Clusters awaiting a human decision, for the moderation queue. Each entry
+ * carries the suggested report and the primary it would join, so a moderator
+ * can compare the two before confirming or separating.
+ */
+export async function listSuggestedClusters(sql: Sql) {
+  const rows = await sql`
+    SELECT s.data AS suggested, p.data AS primary_report
+    FROM pafos_issues s
+    LEFT JOIN pafos_issues p
+      ON p.cluster_id = s.cluster_id AND p.cluster_role = 'primary'
+    WHERE s.hidden_at IS NULL
+      AND s.cluster_status = 'suggested'
+      AND s.cluster_role = 'linked'
+    ORDER BY s.created_at DESC
+    LIMIT 100`;
+  return rows.map((row) => ({
+    issue: row.suggested as Issue,
+    primary: (row.primary_report as Issue | null) ?? null,
+  }));
+}
+
 /** Every report in a cluster, so the detail view can show its supporting reports. */
 export async function clusterMembers(sql: Sql, clusterId: string) {
   const rows = await sql`

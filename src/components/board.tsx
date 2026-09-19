@@ -40,6 +40,7 @@ import DepartmentIdentity from "./department-identity";
 import CategoryIcon from "./category-icon";
 import ServicesDirectory from "./services-directory";
 import LanguageSwitcher from "./language-switcher";
+import { SeverityPanel, ClusterPanel } from "./issue-signals";
 import { useI18n } from "./i18n-provider";
 import { isMessageKey, type MessageKey } from "@/lib/i18n";
 import type { IssueCursor, IssuePage } from "@/lib/db";
@@ -594,6 +595,8 @@ export default function Board() {
                 {selected.photo?.status === "pending" && (
                   <p className="photo-status">{t("issue.photoPending")}</p>
                 )}
+                <SeverityPanel issue={selected} />
+                <ClusterPanel issue={selected} />
                 <div className="assignment-block">
                   <span className="small-label">
                     {t("issue.suggestedService")}
@@ -871,6 +874,14 @@ export default function Board() {
                       {p.assignment.source === "deepseek" && (
                         <span className="classification-note">
                           {t("issue.autoClassified")}
+                        </span>
+                      )}
+                      {p.severity && (
+                        <span
+                          className="severity-chip"
+                          data-severity={p.severity.level}
+                        >
+                          {t(`severity.${p.severity.level}` as MessageKey)}
                         </span>
                       )}
                       {p.status !== "resolved" && (

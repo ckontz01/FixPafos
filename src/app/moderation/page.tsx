@@ -4,6 +4,8 @@ import Link from "next/link";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import type { QuarantineItem } from "@/lib/issues";
 import PhotoModeration from "@/components/photo-moderation";
+import FlagReview from "@/components/flag-review";
+import ClusterReview from "@/components/cluster-review";
 import { useI18n } from "@/components/i18n-provider";
 import { isMessageKey } from "@/lib/i18n";
 export default function Moderation() {
@@ -103,6 +105,8 @@ export default function Moderation() {
               <p>{t("moderation.emptyBody")}</p>
             </div>
           )}
+          <FlagReview password={password} />
+          <ClusterReview password={password} />
           <PhotoModeration password={password} />
           {items.map((i) => (
             <article className="quarantine-item" key={i.id}>

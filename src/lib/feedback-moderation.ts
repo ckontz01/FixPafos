@@ -3,10 +3,10 @@ import { DEEPSEEK_MODEL, getDeepSeekClient } from "@/lib/deepseek";
 import { containsBlockedProfanity } from "@/lib/feedback-profanity";
 
 const MODERATION_TOOL_NAME = "record_moderation_decision";
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_ATTEMPTS = 10;
-const moderationAttempts = new Map<string, number[]>();
 
+// Rate limiting lives in lib/http.ts, backed by Postgres. An in-process counter
+// would be per-instance and therefore meaningless on a serverless runtime, so
+// there is deliberately no second implementation here.
 export type ModerationCategory =
   | "profanity"
   | "bullying_or_harassment"
@@ -89,33 +89,6 @@ export type ModerationDecision =
       category: ModerationCategory;
     }
   | { status: "unavailable" };
-
-export function feedbackModerationRateLimited(request: Request) {
-  const client =
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "local";
-  const now = Date.now();
-  const recent = (moderationAttempts.get(client) ?? []).filter(
-    (timestamp) => now - timestamp < RATE_LIMIT_WINDOW_MS,
-  );
-
-  recent.push(now);
-  moderationAttempts.set(client, recent);
-
-  if (moderationAttempts.size > 1_000) {
-    for (const [key, timestamps] of moderationAttempts) {
-      if (
-        timestamps.every((timestamp) => now - timestamp >= RATE_LIMIT_WINDOW_MS)
-      ) {
-        moderationAttempts.delete(key);
-      }
-    }
-  }
-
-  return recent.length > RATE_LIMIT_ATTEMPTS;
-}
 
 function parseDecision(input: unknown): ModerationDecision | null {
   if (!input || typeof input !== "object") return null;

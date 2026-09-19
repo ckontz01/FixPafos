@@ -152,6 +152,8 @@ export type Issue = {
   assignment: Assignment;
   severity?: SeverityAssessment;
   cluster?: ClusterLink;
+  /** Reports in this cluster, including this one. Present only when clustered. */
+  clusterSize?: number;
   translation?: Translation;
   createdAt: number;
   seconds: number;
