@@ -13,7 +13,7 @@
  * nothing can appear submitted when it is not.
  */
 
-const CACHE = "pafoslive-shell-v1";
+const CACHE = "pafoslive-shell-v2";
 const SHELL = ["/", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -52,11 +52,15 @@ self.addEventListener("fetch", (event) => {
   // Navigations: network first, falling back to the cached shell when offline,
   // so the reporting form is reachable without a connection.
   if (request.mode === "navigate") {
+    // Other pages must never replace the reporting shell (or cache moderation).
+    if (url.pathname !== "/") return;
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put("/", copy)).catch(() => {});
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put("/", copy)).catch(() => {});
+          }
           return response;
         })
         .catch(() => caches.match("/").then((cached) => cached ?? Response.error())),

@@ -60,6 +60,14 @@ const asSql = (value: unknown) => value as unknown as Sql;
 export const DEFAULT_PAGE_SIZE = 50;
 export const MAX_PAGE_SIZE = 200;
 
+/** Hidden reports must not remain accessible through their photo URLs. */
+export async function publicPhotoPath(id: string, sql: Sql = asSql(db())) {
+  const [row] = await sql`SELECT p.blob_path FROM pafos_photos p
+    JOIN pafos_issues i ON i.id=p.issue_id
+    WHERE p.issue_id=${id} AND p.status='approved' AND i.hidden_at IS NULL`;
+  return row ? String(row.blob_path) : null;
+}
+
 export type IssueCursor = { createdAt: number; id: string };
 
 export type IssueQuery = {
