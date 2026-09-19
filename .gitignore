@@ -13,3 +13,4 @@ outputs/
 !/.env.example
 next-env.d.ts
 .pglite/
+evaluation/results/
