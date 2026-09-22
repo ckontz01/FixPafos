@@ -28,7 +28,9 @@ export default function IssueMap(props: Props) {
   const host = useRef<HTMLDivElement>(null),
     map = useRef<maplibregl.Map | null>(null),
     latest = useRef(props);
-  const markers = useRef<maplibregl.Marker[]>([]),
+  const markers = useRef(
+      new Map<string, { marker: maplibregl.Marker; signature: string }>(),
+    ),
     draftMarker = useRef<maplibregl.Marker | null>(null);
   const [ready, setReady] = useState(false),
     [error, setError] = useState("");
@@ -40,12 +42,15 @@ export default function IssueMap(props: Props) {
   }, [props]);
   useEffect(() => {
     if (!host.current) return;
+    const markerRegistry = markers.current;
     let instance: maplibregl.Map;
     try {
       instance = new maplibregl.Map({
         container: host.current,
         center: PAFOS_CENTER,
         zoom: 13.2,
+        // Dense phone screens do not need a 3x/4x WebGL drawing buffer.
+        pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
         minZoom: 10,
         maxZoom: 19,
         maxBounds: [
@@ -114,26 +119,55 @@ export default function IssueMap(props: Props) {
     resize.observe(host.current);
     return () => {
       resize.disconnect();
-      markers.current.forEach((m) => m.remove());
-      markers.current = [];
+      markerRegistry.forEach(({ marker }) => marker.remove());
+      markerRegistry.clear();
       instance.remove();
       map.current = null;
     };
   }, []);
   useEffect(() => {
     if (!ready || !map.current) return;
-    markers.current.forEach((m) => m.remove());
-    markers.current = [];
+    const visible = new Set(props.issues.map((issue) => issue.id));
+    for (const [id, entry] of markers.current) {
+      if (!visible.has(id)) {
+        entry.marker.remove();
+        markers.current.delete(id);
+      }
+    }
     const grouped = new Map<string, Issue[]>();
     for (const issue of props.issues) {
       const key = `${issue.location.longitude.toFixed(5)},${issue.location.latitude.toFixed(5)}`;
-      grouped.set(key, [...(grouped.get(key) ?? []), issue]);
+      const group = grouped.get(key);
+      if (group) group.push(issue);
+      else grouped.set(key, [issue]);
     }
     for (const group of grouped.values())
       group.forEach((issue, index) => {
-        const button = document.createElement("button");
+        const angle = (index / group.length) * Math.PI * 2;
+        const radius = group.length > 1 ? Math.max(24, group.length * 7) : 0;
+        const offset: [number, number] = [
+          Math.cos(angle) * radius,
+          Math.sin(angle) * radius,
+        ];
+        const signature = JSON.stringify([
+          issue.location,
+          issue.category,
+          issue.status,
+          issue.message,
+          props.selected?.id === issue.id,
+          t(`category.${issue.category}` as MessageKey),
+          offset,
+        ]);
+        const existing = markers.current.get(issue.id);
+        // Keep unchanged pins, their DOM and listeners during polls/selections.
+        if (existing?.signature === signature) return;
+        const button =
+          existing?.marker.getElement() ?? document.createElement("button");
         const category = categories[issue.category];
-        button.className = `issue-pin${props.selected?.id === issue.id ? " selected" : ""}${issue.status === "resolved" ? " resolved" : ""}`;
+        // Retain MapLibre's positioning classes when updating an existing pin.
+        button.classList.add("issue-pin");
+        button.classList.toggle("selected", props.selected?.id === issue.id);
+        button.classList.toggle("resolved", issue.status === "resolved");
         button.dataset.category = issue.category;
         button.textContent =
           issue.status === "resolved" ? "✓" : category.symbol;
@@ -156,19 +190,18 @@ export default function IssueMap(props: Props) {
         button.title = `${t(
           `category.${issue.category}` as MessageKey,
         )} · ${issue.location.label}`;
-        button.addEventListener("click", (e) => {
-          e.stopPropagation();
-          latest.current.onSelect(issue.id);
-        });
-        const angle = (index / group.length) * Math.PI * 2,
-          radius = group.length > 1 ? Math.max(24, group.length * 7) : 0;
-        const marker = new maplibregl.Marker({
-          element: button,
-          offset: [Math.cos(angle) * radius, Math.sin(angle) * radius],
-        })
-          .setLngLat([issue.location.longitude, issue.location.latitude])
-          .addTo(map.current!);
-        markers.current.push(marker);
+        if (!existing)
+          button.addEventListener("click", (e) => {
+            e.stopPropagation();
+            latest.current.onSelect(issue.id);
+          });
+        const marker =
+          existing?.marker ?? new maplibregl.Marker({ element: button });
+        marker
+          .setOffset(offset)
+          .setLngLat([issue.location.longitude, issue.location.latitude]);
+        if (!existing) marker.addTo(map.current!);
+        markers.current.set(issue.id, { marker, signature });
       });
     // `t` is a dependency because pin labels and tooltips are translated:
     // switching language must relabel every marker.
@@ -225,8 +258,7 @@ export default function IssueMap(props: Props) {
         map.current?.flyTo({ center: [longitude, latitude], zoom: 16 });
         if (props.picking) props.onPick({ longitude, latitude, label: "" });
       },
-      () =>
-        setError(t("map.locationUnavailable")),
+      () => setError(t("map.locationUnavailable")),
       { timeout: 10000 },
     );
   };
@@ -250,9 +282,7 @@ export default function IssueMap(props: Props) {
         <MapPin size={18} />
         <div>
           <strong>{t("nav.location")}</strong>
-          <span>
-            {props.picking ? t("map.pickPrompt") : t("map.tagline")}
-          </span>
+          <span>{props.picking ? t("map.pickPrompt") : t("map.tagline")}</span>
         </div>
       </div>
       <div className="map-tools">

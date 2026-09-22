@@ -1551,6 +1551,17 @@ label {
   font-size: 13px;
   color: var(--secondary);
 }
+.route-loading { padding: 2rem; min-height: 45vh; color: var(--ink); }
+.insights-pending { min-height: 45vh; }
+.skeleton-tile span, .skeleton-tile strong { display: block; background: var(--rule); border-radius: 4px; }
+.skeleton-tile span { height: 12px; width: 70%; }
+.skeleton-tile strong { height: 32px; width: 40%; margin-top: 16px; }
+.insights-updating { min-height: 1.5em; margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+.chart-grid[aria-busy="true"], .stat-row[aria-busy="true"] { opacity: 0.65; }
+@media (max-width: 48rem) {
+  .chart-card { content-visibility: auto; contain-intrinsic-size: auto 300px; }
+}
+@media print { .chart-card { content-visibility: visible; } }
 .flag-reason select {
   border: 1px solid var(--rule);
   border-radius: var(--radius-control);

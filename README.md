@@ -123,6 +123,12 @@ validated tokens and their scores are recorded in `src/app/design.css`.
 
 ## Accessibility and offline use
 
+Analytics aggregates are read in one database round trip and one consistent
+snapshot, without caching report totals. Navigation streams the page header and
+loading state immediately; filters respond optimistically while fresh results
+load. Map markers are reused across refreshes and selection changes, and the
+map canvas is capped at a 2x pixel ratio on dense mobile screens.
+
 - Greek, English and Russian throughout, Greek first.
 - **Dictation** in the reader's own language, so a report can be spoken rather
   than typed on a phone outdoors. The transcript is always reviewable and

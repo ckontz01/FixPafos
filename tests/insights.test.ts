@@ -3,7 +3,11 @@ import assert from "node:assert/strict";
 import { createTestDatabase, type TaggedSql } from "./helpers/pg";
 import { getInsightsWith } from "../src/lib/insights";
 import { flagIssueWith, type Sql } from "../src/lib/db";
-import { FLAG_HIDE_THRESHOLD, type Issue, type Severity } from "../src/lib/issues";
+import {
+  FLAG_HIDE_THRESHOLD,
+  type Issue,
+  type Severity,
+} from "../src/lib/issues";
 
 const asSql = (sql: TaggedSql) => sql as unknown as Sql;
 const HOUR = 3_600_000;
@@ -12,7 +16,9 @@ const DAY = 24 * HOUR;
 const T0 = Date.UTC(2026, 0, 15, 12, 0, 0);
 
 let seq = 0;
-function makeIssue(overrides: Partial<Issue> & { createdAt?: number } = {}): Issue {
+function makeIssue(
+  overrides: Partial<Issue> & { createdAt?: number } = {},
+): Issue {
   seq += 1;
   return {
     id: `i-${String(seq).padStart(4, "0")}`,
@@ -59,7 +65,20 @@ test("totals, resolution rate and durations come from stored rows", async () => 
     await insert(sql, resolved(20));
     await insert(sql, resolved(60));
 
-    const insights = await getInsightsWith(asSql(sql));
+    let queryCount = 0;
+    const counted = Object.assign(
+      (strings: TemplateStringsArray, ...values: unknown[]) => {
+        queryCount += 1;
+        return sql(strings, ...values);
+      },
+      { json: sql.json, begin: sql.begin },
+    );
+    const insights = await getInsightsWith(counted);
+    assert.equal(
+      queryCount,
+      1,
+      "analytics must not regress to a network-query waterfall",
+    );
     assert.equal(insights.totals.total, 5);
     assert.equal(insights.totals.open, 2);
     assert.equal(insights.totals.resolved, 3);
@@ -95,7 +114,11 @@ test("hidden reports are excluded from every operational figure", async () => {
       await flagIssueWith(asSql(sql), flagged.id, `voter-${i}`, "spam");
 
     const insights = await getInsightsWith(asSql(sql));
-    assert.equal(insights.totals.total, 1, "a withdrawn report must not inflate totals");
+    assert.equal(
+      insights.totals.total,
+      1,
+      "a withdrawn report must not inflate totals",
+    );
     assert.deepEqual(
       insights.byCategory.map((c) => c.key),
       ["roads"],
@@ -212,7 +235,11 @@ test("hotspots aggregate nearby coordinates and recurring locations repeat", asy
       await insert(
         sql,
         makeIssue({
-          location: { longitude: 32.42, latitude: lat, label: "Kennedy Square" },
+          location: {
+            longitude: 32.42,
+            latitude: lat,
+            label: "Kennedy Square",
+          },
         }),
       );
     await insert(

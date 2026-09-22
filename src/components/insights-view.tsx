@@ -1,5 +1,6 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useOptimistic, useTransition } from "react";
 import { useI18n } from "./i18n-provider";
 import {
   BarList,
@@ -35,12 +36,20 @@ export default function InsightsView({
   const { t } = useI18n();
   const router = useRouter();
   const params = useSearchParams();
+  const [isPending, startTransition] = useTransition();
+  const [optimisticQuery, setOptimisticQuery] = useOptimistic(
+    params.toString(),
+  );
+  const selectedParams = new URLSearchParams(optimisticQuery);
 
   const setParam = (key: string, value: string) => {
-    const next = new URLSearchParams(params.toString());
+    const next = new URLSearchParams(optimisticQuery);
     if (value) next.set(key, value);
     else next.delete(key);
-    router.push(`/insights?${next.toString()}`);
+    startTransition(() => {
+      setOptimisticQuery(next.toString());
+      router.push(`/insights?${next.toString()}`, { scroll: false });
+    });
   };
 
   const number = (value: number) =>
@@ -142,7 +151,7 @@ export default function InsightsView({
         <label>
           {t("insights.period")}
           <select
-            value={period}
+            value={selectedParams.get("period") ?? period}
             onChange={(e) => setParam("period", e.target.value)}
           >
             <option value="all">{t("insights.allTime")}</option>
@@ -154,7 +163,7 @@ export default function InsightsView({
         <label>
           {t("insights.category")}
           <select
-            value={params.get("category") ?? ""}
+            value={selectedParams.get("category") ?? ""}
             onChange={(e) => setParam("category", e.target.value)}
           >
             <option value="">{t("insights.allCategories")}</option>
@@ -168,7 +177,7 @@ export default function InsightsView({
         <label>
           {t("insights.department")}
           <select
-            value={params.get("department") ?? ""}
+            value={selectedParams.get("department") ?? ""}
             onChange={(e) => setParam("department", e.target.value)}
           >
             <option value="">{t("insights.allDepartments")}</option>
@@ -182,7 +191,7 @@ export default function InsightsView({
         <label>
           {t("severity.label")}
           <select
-            value={params.get("severity") ?? ""}
+            value={selectedParams.get("severity") ?? ""}
             onChange={(e) => setParam("severity", e.target.value)}
           >
             <option value="">{t("insights.allSeverities")}</option>
@@ -196,7 +205,7 @@ export default function InsightsView({
         <label>
           {t("board.statusFilter")}
           <select
-            value={params.get("status") ?? ""}
+            value={selectedParams.get("status") ?? ""}
             onChange={(e) => setParam("status", e.target.value)}
           >
             <option value="">{t("insights.allStatuses")}</option>
@@ -206,7 +215,14 @@ export default function InsightsView({
         </label>
       </section>
 
-      <section className="stat-row" aria-label={t("insights.totalReports")}>
+      <p className="insights-updating" role="status">
+        {isPending ? t("common.loading") : ""}
+      </p>
+      <section
+        className="stat-row"
+        aria-busy={isPending}
+        aria-label={t("insights.totalReports")}
+      >
         <StatTile
           label={t("insights.totalReports")}
           value={compact(insights.totals.total, localeTag)}
@@ -240,7 +256,7 @@ export default function InsightsView({
         />
       </section>
 
-      <div className="chart-grid">
+      <div className="chart-grid" aria-busy={isPending}>
         <ChartCard
           title={t("insights.overTime")}
           table={
@@ -293,7 +309,11 @@ export default function InsightsView({
             />
           }
         >
-          <BarList data={departmentBars} emptyLabel={empty} locale={localeTag} />
+          <BarList
+            data={departmentBars}
+            emptyLabel={empty}
+            locale={localeTag}
+          />
         </ChartCard>
 
         <ChartCard
