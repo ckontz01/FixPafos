@@ -44,6 +44,12 @@ duplicate links. Service-team passwords are scoped to the assigned department;
 only that team can publish a verified reply or resolve its issue. No report is
 automatically dispatched to an authority.
 
+**Judge access:** working demonstration credentials for the eight service teams
+and moderation are supplied only in the private competition submission package.
+They are not published in this repository. These demonstration passwords will
+be rotated or replaced before any official production deployment, with access
+issued only to authorized service and moderation staff.
+
 ## Running it
 
 Requires Node.js 24.

@@ -63,6 +63,12 @@ labelled as an estimate, with its reasoning visible.
 | Bulk export requires the moderation password | `api/export` |
 | Report text sent to the model provider is the public report itself | All model calls |
 
+The private competition submission includes temporary judge access credentials.
+Those credentials will be rotated or replaced before any official production
+deployment; department and moderator access must then be issued only to
+authorized staff. The public repository and public manual do not contain
+working passwords.
+
 ## Prompt injection
 
 Report text is untrusted input. Every system prompt states this; every model
