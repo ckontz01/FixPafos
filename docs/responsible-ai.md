@@ -9,9 +9,10 @@ what was built and what remains open.
 
 ## Declaration of AI use in building this project
 
-Development used AI coding assistance (Claude) and the DeepSeek models the
-platform itself calls at runtime. All design decisions, labels in the evaluation
-dataset, and the final code were reviewed by the team.
+Development and documentation used AI assistance (Claude and OpenAI Codex).
+The platform calls DeepSeek models at runtime. The project team is responsible
+for reviewing the final code, evaluation labels, and competition submission
+materials before entry; AI-generated text should not be submitted unchecked.
 
 ## Where AI makes a decision, and what bounds it
 
