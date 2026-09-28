@@ -1,4 +1,4 @@
-# AI evaluation
+# FixPafos AI evaluation
 
 This directory holds a labelled dataset and a runner that measure how well the
 platform's AI actually performs. It exists so claims about the system can be

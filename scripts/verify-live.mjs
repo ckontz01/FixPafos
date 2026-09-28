@@ -6,8 +6,8 @@ const base = process.env.TEST_BASE_URL || "http://localhost:3107";
 // These assertions match English accessible names, so the interface
 // language is pinned explicitly instead of being negotiated per machine.
 const withLang = (url) => url + (url.includes("?") ? "&" : "?") + "lang=en";
-if (!/^https?:\/\/(localhost:3107|pafoslive[^/]*\.vercel\.app)$/.test(base))
-  throw new Error("Only PafosLive test targets are permitted");
+if (!/^https?:\/\/(localhost:3107|fixpafos[^/]*\.vercel\.app)$/.test(base))
+  throw new Error("Only FixPafos test targets are permitted");
 const sql = postgres(process.env.DATABASE_URL, { ssl: "verify-full", max: 1 });
 const author = `QA-${Date.now()}`;
 const browser = await chromium.launch({

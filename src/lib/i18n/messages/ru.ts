@@ -3,17 +3,18 @@ import type { Messages } from "./el";
 // four CLDR plural categories, so the one/few/many/other entries genuinely
 // differ here, unlike Greek and English.
 export const ru: Messages = {
-  "app.name": "PafosLive",
-  "app.title": "PafosLive · Ваш район на карте",
+  "app.name": "FixPafos",
+  "app.title": "FixPafos · Ваш район на карте",
   "app.description":
     "Общественная платформа для сообщений о повседневных проблемах в Пафосе. Сообщайте о дорогах, канализации, воде и уборке с указанием ответственной службы.",
+  "app.logoDisclosure": "??????? FixPafos ?????? ? ??????? ??.",
   "app.independent": "Независимая общественная платформа",
 
   "lang.label": "Язык",
   "lang.select": "Выбор языка",
 
   "nav.main": "Основная навигация",
-  "nav.home": "Главная PafosLive",
+  "nav.home": "Главная FixPafos",
   "nav.map": "Карта сообщества",
   "nav.services": "Местные службы",
   "nav.insights": "Аналитика",
@@ -138,7 +139,7 @@ export const ru: Messages = {
   "reply.verified": "Подтверждённая служба",
   "reply.verifiedResolved": "Подтверждённая служба · Решено",
   "reply.verifiedTitle":
-    "Опубликовано с использованием пароля службы в PafosLive",
+    "Опубликовано с использованием пароля службы в FixPafos",
 
   "flag.action": "Пожаловаться на сообщение",
   "flag.title": "Пожаловаться на это сообщение?",
@@ -308,7 +309,7 @@ export const ru: Messages = {
   "team.otherTeam":
     "Вы подтверждены как {department}. Эта проблема относится к другой команде.",
   "team.eligibility":
-    "Для уполномоченных представителей с паролем, выданным PafosLive. Подтверждение удостоверяет доступ к платформе, а не трудовые отношения.",
+    "Для уполномоченных представителей с паролем, выданным FixPafos. Подтверждение удостоверяет доступ к платформе, а не трудовые отношения.",
   "team.replyNotice": "Подтверждённый ответ опубликован.",
   "team.resolveNotice": "Проблема отмечена решённой. Ваше обновление публично.",
   "team.unavailable": "Подтверждение команды временно недоступно.",
@@ -446,7 +447,7 @@ export const ru: Messages = {
   "services.note":
     "Сообщения получают предполагаемую службу. Для официального обращения свяжитесь с органом власти напрямую.",
   "services.disclaimer":
-    "Официальные логотипы обозначают каждую службу. PafosLive — независимая общественная платформа.",
+    "Официальные логотипы обозначают каждую службу. FixPafos — независимая общественная платформа.",
 
   "error.generic": "Запрос не выполнен. Попробуйте снова.",
   "error.unavailable":

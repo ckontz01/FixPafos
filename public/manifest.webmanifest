@@ -1,6 +1,6 @@
 {
-  "name": "PafosLive",
-  "short_name": "PafosLive",
+  "name": "FixPafos",
+  "short_name": "FixPafos",
   "description": "Report everyday municipal issues in Pafos on a shared public map.",
   "start_url": "/",
   "scope": "/",
@@ -13,9 +13,9 @@
   "categories": ["government", "utilities"],
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/fixpafos-logo.png",
+      "sizes": "1254x1254",
+      "type": "image/png",
       "purpose": "any"
     }
   ]

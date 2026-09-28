@@ -42,7 +42,7 @@ export default function ExportPanel({ password }: { password: string }) {
       const link = document.createElement("a");
       link.href = url;
       link.download =
-        format === "digest" ? `pafoslive-digest-${department}.txt` : "pafoslive.csv";
+        format === "digest" ? `fixpafos-digest-${department}.txt` : "fixpafos.csv";
       link.click();
       URL.revokeObjectURL(url);
     } catch (e) {

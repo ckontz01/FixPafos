@@ -1,6 +1,10 @@
-# PafosLive
+# FixPafos
 
-**LIVE AT: [https://pafoslive.vercel.app](https://pafoslive.vercel.app)**
+**LIVE AT: [https://fixpafos.vercel.app](https://fixpafos.vercel.app)**
+
+![FixPafos logo](public/fixpafos-logo.png)
+
+The FixPafos logo was AI-generated and is used unchanged from the team-supplied image.
 
 A map-first civic reporting platform for Pafos, Cyprus. Citizens report everyday
 municipal problems in **Greek, English or Russian**; the platform moderates the
@@ -17,7 +21,7 @@ automatically.
 - **Responsible AI, privacy and security:** [`docs/responsible-ai.md`](docs/responsible-ai.md)
 - **AI evaluation:** [`evaluation/README.md`](evaluation/README.md)
 - **Interface design system:** [`design.md`](design.md)
-- **Illustrated user manual (PDF):** [`docs/PafosLive_User_Manual.pdf`](docs/PafosLive_User_Manual.pdf)
+- **Illustrated user manual (PDF):** [`docs/FixPafos_User_Manual.pdf`](docs/FixPafos_User_Manual.pdf)
 
 ## Current tech stack
 

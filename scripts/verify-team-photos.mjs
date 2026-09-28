@@ -9,8 +9,8 @@ const base = process.env.TEST_BASE_URL || "http://localhost:3107";
 // These assertions match English accessible names, so the interface
 // language is pinned explicitly instead of being negotiated per machine.
 const withLang = (url) => url + (url.includes("?") ? "&" : "?") + "lang=en";
-if (!/^https?:\/\/(localhost:3107|pafoslive[^/]*\.vercel\.app)$/.test(base))
-  throw new Error("PafosLive only");
+if (!/^https?:\/\/(localhost:3107|fixpafos[^/]*\.vercel\.app)$/.test(base))
+  throw new Error("FixPafos only");
 const credentials = await readFile("docs/team-access.private.txt", "utf8");
 const passwordFor = (id) =>
   credentials.match(

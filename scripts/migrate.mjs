@@ -6,7 +6,7 @@ try {
   await sql.unsafe(
     await readFile(new URL("./schema.sql", import.meta.url), "utf8"),
   );
-  console.log("PafosLive schema ready. No source application database used.");
+  console.log("FixPafos schema ready. No source application database used.");
 } finally {
   await sql.end();
 }

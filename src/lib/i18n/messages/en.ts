@@ -3,17 +3,18 @@ import type { Messages } from "./el";
 // missing or misspelt. Several strings here are also the accessible names the
 // Playwright verification scripts assert on, so they are deliberately stable.
 export const en: Messages = {
-  "app.name": "PafosLive",
-  "app.title": "PafosLive · Your neighbourhood, on the map",
+  "app.name": "FixPafos",
+  "app.title": "FixPafos · Your neighbourhood, on the map",
   "app.description":
     "A public community board for everyday issues in Pafos. Report roads, sewage, waste and other local problems, with suggested responsible services.",
+  "app.logoDisclosure": "FixPafos logo was AI-generated.",
   "app.independent": "Independent community platform",
 
   "lang.label": "Language",
   "lang.select": "Select language",
 
   "nav.main": "Main navigation",
-  "nav.home": "PafosLive home",
+  "nav.home": "FixPafos home",
   "nav.map": "Community map",
   "nav.services": "Local services",
   "nav.insights": "Insights",
@@ -137,7 +138,7 @@ export const en: Messages = {
   "reply.submit": "Post reply",
   "reply.verified": "Verified team",
   "reply.verifiedResolved": "Verified team · Resolved",
-  "reply.verifiedTitle": "Posted using this department’s PafosLive password",
+  "reply.verifiedTitle": "Posted using this department’s FixPafos password",
 
   "flag.action": "Flag inappropriate report",
   "flag.title": "Flag this report?",
@@ -305,7 +306,7 @@ export const en: Messages = {
   "team.otherTeam":
     "You are verified as {department}. This issue belongs to another team.",
   "team.eligibility":
-    "For authorized representatives with a password issued by PafosLive. Verification confirms department access on this platform, not employment.",
+    "For authorized representatives with a password issued by FixPafos. Verification confirms department access on this platform, not employment.",
   "team.replyNotice": "Verified reply published.",
   "team.resolveNotice": "Issue marked resolved. Your update is public.",
   "team.unavailable": "Team verification is temporarily unavailable.",
@@ -443,7 +444,7 @@ export const en: Messages = {
   "services.note":
     "Reports receive a suggested service. For an official request, contact the authority directly.",
   "services.disclaimer":
-    "Official authority logos identify each service. PafosLive is an independent community platform.",
+    "Official authority logos identify each service. FixPafos is an independent community platform.",
 
   "error.generic": "The request failed. Please try again.",
   "error.unavailable":

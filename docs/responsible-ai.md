@@ -1,4 +1,4 @@
-# Responsible AI, privacy and security
+# FixPafos responsible AI, privacy and security
 
 This document records the safeguards actually implemented in this codebase, and
 separates them from the questions that need a qualified legal or municipal
@@ -10,7 +10,7 @@ what was built and what remains open.
 ## Declaration of AI use in building this project
 
 Development and documentation used AI assistance (Claude and OpenAI Codex).
-The platform calls DeepSeek models at runtime. The project team is responsible
+The supplied FixPafos logo was AI-generated and is displayed without alteration. The platform calls DeepSeek models at runtime. The project team is responsible
 for reviewing the final code, evaluation labels, and competition submission
 materials before entry; AI-generated text should not be submitted unchecked.
 

@@ -1,4 +1,4 @@
-# Architecture
+# FixPafos architecture
 
 ## What this is
 

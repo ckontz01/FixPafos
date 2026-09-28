@@ -9,13 +9,13 @@ export async function GET() {
     );
     return json(
       {
-        app: "PafosLive",
+        app: "FixPafos",
         database: "ready",
         configuration: ready ? "ready" : "incomplete",
       },
       ready ? 200 : 503,
     );
   } catch {
-    return json({ app: "PafosLive", database: "unavailable" }, 503);
+    return json({ app: "FixPafos", database: "unavailable" }, 503);
   }
 }

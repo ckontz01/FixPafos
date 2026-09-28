@@ -133,7 +133,7 @@ export async function handle(
   try {
     return await action();
   } catch {
-    console.error("PafosLive request could not complete");
+    console.error("FixPafos request could not complete");
     return fail("error.unavailable", 503);
   }
 }

@@ -49,6 +49,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: translate(locale, "app.description"),
     manifest: "/manifest.webmanifest",
     applicationName: translate(locale, "app.name"),
+    icons: { icon: "/fixpafos-logo.png", apple: "/fixpafos-logo.png" },
     other: { "mobile-web-app-capable": "yes" },
   };
 }

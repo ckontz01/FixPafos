@@ -1,5 +1,5 @@
 /**
- * Service worker for PafosLive.
+ * Service worker for FixPafos.
  *
  * Deliberately minimal. It caches the application shell so the reporting form
  * opens on a bad connection, and it does nothing else.
@@ -13,8 +13,8 @@
  * nothing can appear submitted when it is not.
  */
 
-const CACHE = "pafoslive-shell-v2";
-const SHELL = ["/", "/manifest.webmanifest", "/icon.svg"];
+const CACHE = "fixpafos-shell-v3";
+const SHELL = ["/", "/manifest.webmanifest", "/fixpafos-logo.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

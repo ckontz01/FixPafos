@@ -1,6 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, ShieldCheck } from "lucide-react";
 import type { QuarantineItem } from "@/lib/issues";
 import PhotoModeration from "@/components/photo-moderation";
@@ -53,6 +54,7 @@ export default function Moderation() {
   return (
     <main className="moderation-page">
       <Link className="back-link" href="/">
+        <Image src="/fixpafos-logo.png" alt="" width={28} height={28} />
         <ArrowLeft size={17} /> {t("app.name")}
       </Link>
       <ShieldCheck size={32} />

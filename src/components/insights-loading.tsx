@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, BarChart3 } from "lucide-react";
 import { useI18n } from "./i18n-provider";
 
@@ -8,6 +9,7 @@ export function InsightsHeader() {
   return (
     <header className="insights-header">
       <Link className="back-link" href="/">
+        <Image src="/fixpafos-logo.png" alt="" width={28} height={28} />
         <ArrowLeft size={17} /> {t("insights.backToMap")}
       </Link>
       <div className="insights-title">

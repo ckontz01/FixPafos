@@ -18,7 +18,7 @@ test("department credentials are salted and sessions use protected cookies", asy
   assert.equal(await checkPassword("wrong", a), false);
   assert.equal(await checkPassword("x".repeat(257), a), false);
   assert.equal(isDepartment("__proto__"), false);
-  const request = new Request("https://pafoslive.vercel.app", {
+  const request = new Request("https://fixpafos.vercel.app", {
     headers: { cookie: `other=x; pafos-team=${"a".repeat(64)}` },
   });
   assert.equal(sessionToken(request), "a".repeat(64));

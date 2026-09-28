@@ -29,7 +29,7 @@ function sslMode(url: string): "verify-full" | false {
 
 export function db() {
   const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("PafosLive database is not configured");
+  if (!url) throw new Error("FixPafos database is not configured");
   const loopback = sslMode(url) === false;
   client ??= postgres(url, {
     ssl: sslMode(url),

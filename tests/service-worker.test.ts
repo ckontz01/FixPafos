@@ -7,16 +7,16 @@ test("offline shell does not intercept moderation, insights or API requests", as
   const handlers: Record<string, (event: unknown) => void> = {};
   const writes: string[] = [];
   runInNewContext(readFileSync("public/sw.js", "utf8"), {
-    self: { location: { origin: "https://pafoslive.vercel.app" }, addEventListener: (name: string, handler: (event: unknown) => void) => { handlers[name] = handler; } },
+    self: { location: { origin: "https://fixpafos.vercel.app" }, addEventListener: (name: string, handler: (event: unknown) => void) => { handlers[name] = handler; } },
     URL, Response,
     fetch: async () => new Response("shell"),
     caches: { open: async () => ({ put: async (path: string) => { writes.push(path); } }) },
   });
   for (const path of ["/moderation", "/insights", "/api/issues", "/api/photos/id"]) {
-    handlers.fetch({ request: { method: "GET", mode: "navigate", url: `https://pafoslive.vercel.app${path}` }, respondWith: () => assert.fail(`Unexpected cache interception: ${path}`) });
+    handlers.fetch({ request: { method: "GET", mode: "navigate", url: `https://fixpafos.vercel.app${path}` }, respondWith: () => assert.fail(`Unexpected cache interception: ${path}`) });
   }
   let response: Promise<Response> | undefined;
-  handlers.fetch({ request: { method: "GET", mode: "navigate", url: "https://pafoslive.vercel.app/?lang=en" }, respondWith: (value: Promise<Response>) => { response = value; } });
+  handlers.fetch({ request: { method: "GET", mode: "navigate", url: "https://fixpafos.vercel.app/?lang=en" }, respondWith: (value: Promise<Response>) => { response = value; } });
   assert.equal(await (await response)?.text(), "shell");
   assert.deepEqual(writes, ["/"]);
 });

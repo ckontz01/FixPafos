@@ -35,13 +35,13 @@
   --paper: oklch(97.2% 0.009 90);
   --panel: oklch(99.7% 0.002 100);
   --surface: oklch(94.4% 0.012 95);
-  --ink: oklch(27% 0.023 165);
-  --secondary: oklch(43% 0.018 165);
-  --muted: oklch(49% 0.014 160);
+  --ink: #0b304b;
+  --secondary: #375269;
+  --muted: #587080;
   --rule: oklch(89.5% 0.01 100);
-  --accent: oklch(37% 0.072 165);
-  --accent-hover: oklch(30% 0.062 165);
-  --accent-soft: oklch(94% 0.024 150);
+  --accent: #0b3655;
+  --accent-hover: #082b45;
+  --accent-soft: #e8f0f5;
   --logo-paper: oklch(100% 0 0);
   --warm-surface: oklch(94.6% 0.027 82);
   --warm-ink: oklch(41% 0.06 65);
@@ -101,17 +101,23 @@ h3 {
   letter-spacing: -0.06em;
 }
 .wordmark-light {
-  color: var(--accent);
-  font-weight: 500;
+  color: #be5128;
+  font-weight: 700;
 }
 .brand-symbol {
-  width: 34px;
-  height: 38px;
+  width: 52px;
+  height: 52px;
   display: grid;
   place-items: center;
-  background: var(--accent);
-  color: var(--accent-ink);
-  border-radius: 12px 12px 12px 3px;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  flex: none;
+}
+.brand-symbol img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .app-nav {
   order: 3;
@@ -1588,11 +1594,14 @@ label {
     gap: 6px;
   }
   .brand-symbol {
-    width: 30px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
   .site-header > .button {
     font-size: 11px;
     padding-inline: 9px;
   }
 }
+
+.panel-footer { flex-wrap: wrap; justify-content: flex-start; column-gap: 14px; row-gap: 5px; }
+.panel-footer span:nth-child(2) { color: var(--muted); }

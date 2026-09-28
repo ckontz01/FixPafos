@@ -9,6 +9,7 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -384,10 +385,10 @@ export default function Board() {
       <header className="site-header">
         <Link href="/" className="wordmark" aria-label={t("nav.home")}>
           <span className="brand-symbol">
-            <MapPin size={23} strokeWidth={2.1} />
+            <Image src="/fixpafos-logo.png" width={52} height={52} alt="" priority />
           </span>
           <span>
-            Pafos<span className="wordmark-light">Live</span>
+            Fix<span className="wordmark-light">Pafos</span>
           </span>
         </Link>
         <nav className="app-nav" aria-label={t("nav.main")}>
@@ -985,6 +986,7 @@ export default function Board() {
           )}
           <footer className="panel-footer">
             <span>{t("app.independent")}</span>
+            <span>{t("app.logoDisclosure")}</span>
             <Link href="/insights">{t("nav.insights")}</Link>
             <Link href="/moderation">{t("nav.moderation")}</Link>
           </footer>

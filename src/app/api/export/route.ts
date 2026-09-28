@@ -129,7 +129,7 @@ export function POST(request: Request) {
     return new Response(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="pafoslive-${new Date().toISOString().slice(0, 10)}.csv"`,
+        "Content-Disposition": `attachment; filename="fixpafos-${new Date().toISOString().slice(0, 10)}.csv"`,
         "Cache-Control": "no-store",
       },
     });
@@ -153,7 +153,7 @@ function digest(rows: Record<string, unknown>[], departmentId: string) {
 
   const name = departments[departmentId as keyof typeof departments].name;
   const lines = [
-    `PafosLive digest for ${name}`,
+    `FixPafos digest for ${name}`,
     `Generated ${new Date().toISOString()}`,
     "",
     `Open reports: ${open.length} of ${rows.length} total`,
@@ -182,7 +182,7 @@ function digest(rows: Record<string, unknown>[], departmentId: string) {
   return new Response(lines.join("\n"), {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Content-Disposition": `attachment; filename="pafoslive-digest-${departmentId}.txt"`,
+      "Content-Disposition": `attachment; filename="fixpafos-digest-${departmentId}.txt"`,
       "Cache-Control": "no-store",
     },
   });

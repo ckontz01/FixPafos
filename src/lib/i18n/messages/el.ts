@@ -6,17 +6,18 @@
 // (one/few/many/other). Greek and English never resolve to "few" or "many", so
 // those entries simply repeat the general form; Russian uses all of them.
 export const el = {
-  "app.name": "PafosLive",
-  "app.title": "PafosLive · Η γειτονιά σου, στον χάρτη",
+  "app.name": "FixPafos",
+  "app.title": "FixPafos · Η γειτονιά σου, στον χάρτη",
   "app.description":
     "Δημόσια πλατφόρμα αναφοράς καθημερινών προβλημάτων στην Πάφο. Δηλώστε προβλήματα σε δρόμους, αποχέτευση, νερό και καθαριότητα, με προτεινόμενη αρμόδια υπηρεσία.",
+  "app.logoDisclosure": "?? ???????? FixPafos ????????????? ?? AI.",
   "app.independent": "Ανεξάρτητη πλατφόρμα πολιτών",
 
   "lang.label": "Γλώσσα",
   "lang.select": "Επιλογή γλώσσας",
 
   "nav.main": "Κύρια πλοήγηση",
-  "nav.home": "Αρχική PafosLive",
+  "nav.home": "Αρχική FixPafos",
   "nav.map": "Χάρτης κοινότητας",
   "nav.services": "Τοπικές υπηρεσίες",
   "nav.insights": "Στατιστικά",
@@ -140,7 +141,7 @@ export const el = {
   "reply.submit": "Δημοσίευση απάντησης",
   "reply.verified": "Επιβεβαιωμένη ομάδα",
   "reply.verifiedResolved": "Επιβεβαιωμένη ομάδα · Επιλύθηκε",
-  "reply.verifiedTitle": "Δημοσιεύτηκε με τον κωδικό της υπηρεσίας στο PafosLive",
+  "reply.verifiedTitle": "Δημοσιεύτηκε με τον κωδικό της υπηρεσίας στο FixPafos",
 
   "flag.action": "Επισήμανση ακατάλληλης αναφοράς",
   "flag.title": "Επισήμανση αυτής της αναφοράς;",
@@ -311,7 +312,7 @@ export const el = {
   "team.otherTeam":
     "Είστε επιβεβαιωμένοι ως {department}. Αυτό το ζήτημα ανήκει σε άλλη ομάδα.",
   "team.eligibility":
-    "Για εξουσιοδοτημένους εκπροσώπους με κωδικό που εκδόθηκε από το PafosLive. Η επιβεβαίωση πιστοποιεί πρόσβαση στην πλατφόρμα, όχι εργασιακή σχέση.",
+    "Για εξουσιοδοτημένους εκπροσώπους με κωδικό που εκδόθηκε από το FixPafos. Η επιβεβαίωση πιστοποιεί πρόσβαση στην πλατφόρμα, όχι εργασιακή σχέση.",
   "team.replyNotice": "Η επιβεβαιωμένη απάντηση δημοσιεύτηκε.",
   "team.resolveNotice": "Το ζήτημα χαρακτηρίστηκε επιλυμένο. Η ενημέρωσή σας είναι δημόσια.",
   "team.unavailable": "Η επιβεβαίωση ομάδας δεν είναι προσωρινά διαθέσιμη.",
@@ -451,7 +452,7 @@ export const el = {
   "services.note":
     "Οι αναφορές λαμβάνουν προτεινόμενη υπηρεσία. Για επίσημο αίτημα, επικοινωνήστε απευθείας με την αρχή.",
   "services.disclaimer":
-    "Τα επίσημα λογότυπα προσδιορίζουν κάθε υπηρεσία. Το PafosLive είναι ανεξάρτητη πλατφόρμα πολιτών.",
+    "Τα επίσημα λογότυπα προσδιορίζουν κάθε υπηρεσία. Το FixPafos είναι ανεξάρτητη πλατφόρμα πολιτών.",
 
   "error.generic": "Το αίτημα απέτυχε. Δοκιμάστε ξανά.",
   "error.unavailable":
