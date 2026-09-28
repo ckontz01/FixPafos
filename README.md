@@ -1,5 +1,7 @@
 # PafosLive
 
+**LIVE AT: [https://pafoslive.vercel.app](https://pafoslive.vercel.app)**
+
 A map-first civic reporting platform for Pafos, Cyprus. Citizens report everyday
 municipal problems in **Greek, English or Russian**; the platform moderates the
 submission, classifies it, suggests the responsible service, estimates how
@@ -15,6 +17,28 @@ automatically.
 - **Responsible AI, privacy and security:** [`docs/responsible-ai.md`](docs/responsible-ai.md)
 - **AI evaluation:** [`evaluation/README.md`](evaluation/README.md)
 - **Interface design system:** [`design.md`](design.md)
+- **Illustrated user manual (PDF):** [`docs/PafosLive_User_Manual.pdf`](docs/PafosLive_User_Manual.pdf)
+
+## Current tech stack
+
+| Layer | Implementation |
+|---|---|
+| Web app | Next.js 16 App Router, React 19, TypeScript 6, Node.js 24; deployed as a Vercel project with API route handlers |
+| Map | MapLibre GL JS 6 with OpenStreetMap raster tiles and visible attribution |
+| Data | Neon PostgreSQL provisioned through Vercel Marketplace, accessed with `postgres` 3; SQL-backed reports, replies, moderation queues, sessions and rate limits |
+| Photos | Private Vercel Blob storage; Sharp 0.35 re-encodes uploads and removes EXIF/GPS before storage; a permission-checked route serves approved images |
+| AI | DeepSeek through its Anthropic-compatible endpoint using `@anthropic-ai/sdk` 0.110; structured, validated decisions for text moderation, photo review, category, department, severity and possible duplicates |
+| Mobile and accessibility | Responsive interface, installable PWA, browser Web Speech dictation, IndexedDB offline submission queue, keyboard controls and chart data tables |
+| Verification | TypeScript tests via `tsx`, Playwright browser checks, ESLint, and a labelled multilingual AI evaluation dataset |
+
+**Moderation pipeline:** report and reply text is screened before publication;
+blocked text is quarantined, and an unavailable model stops publication. Uploaded
+photos are auto-approved only when DeepSeek judges them clearly relevant, safe,
+high-confidence and free of visible personal information. All other photos stay
+private for human review. Moderators can also review flagged reports and possible
+duplicate links. Service-team passwords are scoped to the assigned department;
+only that team can publish a verified reply or resolve its issue. No report is
+automatically dispatched to an authority.
 
 ## Running it
 
