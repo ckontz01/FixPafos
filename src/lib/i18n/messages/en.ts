@@ -4,6 +4,8 @@ import type { Messages } from "./el";
 // Playwright verification scripts assert on, so they are deliberately stable.
 export const en: Messages = {
   "app.name": "FixPafos",
+  "nav.chat": "Report with AI",
+  "report.chatHint": "Try the experimental reporting assistant",
   "app.title": "FixPafos · Your neighbourhood, on the map",
   "app.description":
     "A public community board for everyday issues in Pafos. Report roads, sewage, waste and other local problems, with suggested responsible services.",

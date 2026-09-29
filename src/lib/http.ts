@@ -51,7 +51,7 @@ export const ERROR_FALLBACKS = {
 } as const;
 
 export type ErrorCode = keyof typeof ERROR_FALLBACKS;
-export async function body(request: Request) {
+export async function body(request: Request, maxBytes = 16384) {
   // Bound actual bytes, including chunked requests without Content-Length.
   const reader = request.body?.getReader();
   if (!reader) return null;
@@ -62,7 +62,7 @@ export async function body(request: Request) {
       const { done, value } = await reader.read();
       if (done) break;
       total += value.length;
-      if (total > 16384) {
+      if (total > maxBytes) {
         await reader.cancel();
         return null;
       }

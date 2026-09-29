@@ -4,10 +4,12 @@ import type { Messages } from "./el";
 // differ here, unlike Greek and English.
 export const ru: Messages = {
   "app.name": "FixPafos",
+  "nav.chat": "Сообщить с ИИ",
+  "report.chatHint": "Попробуйте экспериментального помощника",
   "app.title": "FixPafos · Ваш район на карте",
   "app.description":
     "Общественная платформа для сообщений о повседневных проблемах в Пафосе. Сообщайте о дорогах, канализации, воде и уборке с указанием ответственной службы.",
-  "app.logoDisclosure": "??????? FixPafos ?????? ? ??????? ??.",
+  "app.logoDisclosure": "Логотип FixPafos создан с помощью ИИ.",
   "app.independent": "Независимая общественная платформа",
 
   "lang.label": "Язык",

@@ -22,6 +22,7 @@ automatically.
 - **AI evaluation:** [`evaluation/README.md`](evaluation/README.md)
 - **Interface design system:** [`design.md`](design.md)
 - **Illustrated user manual (PDF):** [`docs/FixPafos_User_Manual.pdf`](docs/FixPafos_User_Manual.pdf)
+- **Experimental chat reporting:** [Try the assistant](https://fixpafos.vercel.app/report/chat) · [Guide and browser requirements](docs/chat-reporting.md)
 
 ## Current tech stack
 
@@ -31,8 +32,8 @@ automatically.
 | Map | MapLibre GL JS 6 with OpenStreetMap raster tiles and visible attribution |
 | Data | Neon PostgreSQL provisioned through Vercel Marketplace, accessed with `postgres` 3; SQL-backed reports, replies, moderation queues, sessions and rate limits |
 | Photos | Private Vercel Blob storage; Sharp 0.35 re-encodes uploads and removes EXIF/GPS before storage; a permission-checked route serves approved images |
-| AI | DeepSeek through its Anthropic-compatible endpoint using `@anthropic-ai/sdk` 0.110; structured, validated decisions for text moderation, photo review, category, department, severity and possible duplicates |
-| Mobile and accessibility | Responsive interface, installable PWA, browser Web Speech dictation, IndexedDB offline submission queue, keyboard controls and chart data tables |
+| AI | DeepSeek through its Anthropic-compatible endpoint using `@anthropic-ai/sdk` 0.110; guided report drafting, plus structured, validated decisions for text moderation, photo review, category, department, severity and possible duplicates |
+| Mobile and accessibility | Responsive interface, installable PWA, browser Web Speech dictation, MediaRecorder voice playback, camera capture, explicit GPS/map selection, IndexedDB offline queue for the standard form, keyboard controls and chart data tables |
 | Verification | TypeScript tests via `tsx`, Playwright browser checks, ESLint, and a labelled multilingual AI evaluation dataset |
 
 **Moderation pipeline:** report and reply text is screened before publication;

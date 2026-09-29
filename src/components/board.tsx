@@ -210,8 +210,10 @@ export default function Board() {
   // Open any report named in the URL, deferred so the server-rendered markup
   // and the first client render still match.
   useEffect(() => {
-    const id = new URLSearchParams(location.search).get("issue");
+    const params = new URLSearchParams(location.search);
+    const id = params.get("issue");
     if (id) queueMicrotask(() => setSelectedId(id));
+    else if (params.get("report") === "1") queueMicrotask(() => setMode("report"));
   }, []);
 
   // Reload whenever the server-side query changes, and poll while visible.
@@ -415,6 +417,7 @@ export default function Board() {
           >
             {t("nav.services")}
           </button>
+          <Link href="/report/chat">{t("nav.chat")}</Link>
         </nav>
         <span className="header-location">
           <span className="live-dot" /> {t("nav.location")}
@@ -449,6 +452,7 @@ export default function Board() {
                 </button>
                 <h1>{t("report.title")}</h1>
                 <p>{t("report.subtitle")}</p>
+                <Link className="chat-entry-link" href="/report/chat"><MessageSquare size={18} />{t("report.chatHint")}<ArrowUpRight size={16} /></Link>
               </div>
               <form className="report-form" onSubmit={submit}>
                 <label>

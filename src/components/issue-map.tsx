@@ -19,6 +19,7 @@ type Props = {
   selected?: Issue;
   picking: boolean;
   draft?: IssueLocation;
+  focusDraft?: boolean;
   onSelect: (id: string) => void;
   onPick: (location: IssueLocation) => void;
 };
@@ -232,6 +233,14 @@ export default function IssueMap(props: Props) {
       .setLngLat([props.draft.longitude, props.draft.latitude])
       .addTo(map.current);
   }, [props.draft, ready]);
+  useEffect(() => {
+    if (props.focusDraft && props.draft && ready && map.current)
+      map.current.flyTo({
+        center: [props.draft.longitude, props.draft.latitude],
+        zoom: Math.max(map.current.getZoom(), 15),
+        duration: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 350,
+      });
+  }, [props.focusDraft, props.draft, ready]);
   const chooseCenter = () => {
     const center = map.current?.getCenter();
     if (!center) return;

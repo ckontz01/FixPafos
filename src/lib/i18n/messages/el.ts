@@ -7,10 +7,12 @@
 // those entries simply repeat the general form; Russian uses all of them.
 export const el = {
   "app.name": "FixPafos",
+  "nav.chat": "Αναφορά με AI",
+  "report.chatHint": "Δοκιμάστε τον πειραματικό βοηθό αναφορών",
   "app.title": "FixPafos · Η γειτονιά σου, στον χάρτη",
   "app.description":
     "Δημόσια πλατφόρμα αναφοράς καθημερινών προβλημάτων στην Πάφο. Δηλώστε προβλήματα σε δρόμους, αποχέτευση, νερό και καθαριότητα, με προτεινόμενη αρμόδια υπηρεσία.",
-  "app.logoDisclosure": "?? ???????? FixPafos ????????????? ?? AI.",
+  "app.logoDisclosure": "Το λογότυπο FixPafos δημιουργήθηκε με AI.",
   "app.independent": "Ανεξάρτητη πλατφόρμα πολιτών",
 
   "lang.label": "Γλώσσα",
