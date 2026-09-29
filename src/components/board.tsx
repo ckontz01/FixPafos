@@ -13,6 +13,7 @@ import Image from "next/image";
 import {
   ArrowLeft,
   ArrowUpRight,
+  BarChart3,
   Check,
   ChevronRight,
   Flag,
@@ -989,10 +990,12 @@ export default function Board() {
             </p>
           )}
           <footer className="panel-footer">
+            <div className="footer-actions">
+              <Link href="/insights"><BarChart3 size={18} aria-hidden="true" />{t("nav.insights")}</Link>
+              <Link href="/moderation"><ShieldCheck size={18} aria-hidden="true" />{t("nav.moderation")}</Link>
+            </div>
             <span>{t("app.independent")}</span>
             <span>{t("app.logoDisclosure")}</span>
-            <Link href="/insights">{t("nav.insights")}</Link>
-            <Link href="/moderation">{t("nav.moderation")}</Link>
           </footer>
         </aside>
       </main>

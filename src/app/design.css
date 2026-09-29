@@ -1623,3 +1623,29 @@ label {
 
 .panel-footer { flex-wrap: wrap; justify-content: flex-start; column-gap: 14px; row-gap: 5px; }
 .panel-footer span:nth-child(2) { color: var(--muted); }
+.footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+.footer-actions a {
+  display: inline-flex;
+  flex: 1 1 120px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 14px;
+  font-weight: 650;
+  text-decoration: none;
+}
+.footer-actions a:hover { background: var(--accent-hover); }
+.footer-actions a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.footer-actions a:active { transform: translateY(1px); }
+.footer-actions svg { flex-shrink: 0; }
