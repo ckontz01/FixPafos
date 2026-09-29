@@ -8,6 +8,11 @@ likely responsible service, estimates how urgent it is, checks whether someone
 has already reported the same thing, and publishes it. Municipal staff reply
 with a verified badge, resolve issues, and read an operational dashboard.
 
+Citizens can use the standard form or an experimental conversational assistant
+at `/report/chat`. The assistant gathers context through DeepSeek follow-ups
+and optional voice transcripts, then offers camera/upload, GPS/map and review
+controls before submitting to the same report endpoint.
+
 It is an independent community platform. It does not dispatch work, and it does
 not transmit anything to an authority automatically.
 
@@ -20,16 +25,21 @@ not transmit anything to an authority automatically.
 | Map | MapLibre GL + OpenStreetMap tiles | No proprietary key needed to run |
 | Photos | Vercel Blob, private access | Never public; every request is permission-checked |
 | Model | DeepSeek via the Anthropic-compatible SDK | Structured tool output with schema validation |
+| Experimental chat | Existing DeepSeek client, browser camera, MediaRecorder, SpeechRecognition and geolocation | Guided drafting with explicit user control of media, location and publication |
 | Charts | Hand-rolled inline SVG | Four small forms did not justify a charting dependency |
 
 ## The report lifecycle
 
 ```mermaid
 flowchart TD
-    A[Citizen writes a report] --> B{Offline?}
+    A[Citizen uses the standard form] --> B{Offline?}
     B -->|Yes| B1[Stored in the device outbox<br/>marked NOT submitted]
     B1 -->|Connection returns| C
     B -->|No| C[POST /api/issues]
+    A2[Citizen opens experimental chat<br/>online, draft held in page memory] --> A3[Typed or reviewed voice transcript<br/>POST /api/report-chat<br/>DeepSeek follow-ups + editable draft]
+    A3 --> A4[Optional camera/upload<br/>confirmed GPS/map pin + public name]
+    A4 --> A5[Citizen reviews and presses Submit report<br/>category unsure]
+    A5 --> C
 
     C --> D[Rate limit<br/>Postgres-backed]
     D --> E[Photo normalised<br/>re-encoded, EXIF/GPS stripped]
@@ -69,6 +79,7 @@ flowchart TD
 
 | Use | Automated decision | Human control | Failure behaviour |
 |---|---|---|---|
+| Conversational drafting | Suggests a follow-up and draft of at most 500 characters | Citizen edits and explicitly submits; media, pin and name are collected by the UI | Guidance returns unavailable; no report is published or moderation bypassed |
 | Text moderation | Blocks publication | Moderator can release from quarantine | Fails closed: nothing is published |
 | Photo relevance and safety | Auto-approves only clear, safe, relevant images | Moderator approves or rejects; can override an auto-approval | Fails closed: photo stays private |
 | Department routing | Suggests a service | Low confidence routes to `review`; the service confirms | Production fails closed; `DEMO_MODE` uses a labelled keyword fallback |
@@ -77,6 +88,32 @@ flowchart TD
 | Duplicate detection | Links only on high confidence *and* close geometry | Everything else is suggested; moderators can separate | Degrades to a deterministic signal that can only suggest |
 
 No AI output is presented as a municipal decision. Nothing is dispatched.
+
+## Experimental conversational reporting
+
+`/api/report-chat` reuses `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL` and
+`DEEPSEEK_MODEL`. It accepts a bounded Greek, English or Russian text
+conversation and validates a single structured `prepare_report` result with
+`reply`, `summary` and `ready`. Same-origin checks, per-client minute/hour rate
+limits and a provider timeout bound the endpoint. The model has no publication,
+authentication or device tool.
+
+The browser collects the optional photo, a confirmed GPS/map pin, landmark and
+public name separately. Camera access and microphone recording start only
+after a button press. `MediaRecorder` provides local playback;
+`SpeechRecognition` provides a user-editable transcript where supported. A
+browser speech service may process audio remotely. Raw recordings remain in
+page memory and are not uploaded to FixPafos or DeepSeek. The conversational
+model receives sent text, including drafting text that has not been published;
+it receives neither raw audio nor the locally attached photo.
+
+Only the final reviewed submission calls `/api/issues`, with category `unsure`.
+The existing publication pipeline performs moderation, classification, routing,
+severity, duplicate detection and photo review. There is no new chat database
+table or alternative publication path. The assistant needs a connection and
+does not use the standard form's offline outbox; leaving or reloading discards
+the unfinished conversation and draft. [The chat guide](chat-reporting.md)
+describes the user journey and browser requirements.
 
 ## Data model
 
@@ -130,6 +167,8 @@ the low tens of thousands of reports.
 - Prompt injection: every model call states that report text is untrusted data,
   all outputs are schema-validated against closed vocabularies, and the
   duplicate adjudicator may only name a candidate it was actually shown.
+- Chat output is restricted to follow-up text, draft text and readiness. Device
+  access, location selection and publication require explicit UI actions.
 - Rate limiting is Postgres-backed so it holds across serverless instances.
 - TLS certificate verification is required for every connection that is not an
   explicit loopback address.
@@ -161,8 +200,15 @@ for exactly those subsets as a per-glyph fallback.
 | `tests/fallback.test.ts` | Demo fallback is off by default and never claims to be the model |
 | `tests/csv.test.ts` | CSV quoting and formula neutralisation |
 | `tests/evaluation.test.ts` | Metric arithmetic and dataset integrity |
+| `tests/report-chat.test.ts` | Bounded multilingual requests, validated draft output, existing client reuse and provider-failure handling |
 | `tests/moderation.test.ts`, `photo-review`, `team-photo`, `validation` | Original moderation, vision and authorization behaviour |
 
 Database tests run against PGlite, which is real Postgres compiled to
 WebAssembly, so generated columns, transactions and constraints behave as they
 do in production rather than being mocked.
+
+`scripts/verify-report-chat.mjs` checks the conversational reporting journey with
+simulated camera, microphone and GPS input and intercepted publication. It
+exercises controls without creating public reports. These checks verify the
+flow; the labelled classifier evaluation does not measure conversational draft
+quality or establish real-device compatibility.

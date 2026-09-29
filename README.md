@@ -13,6 +13,13 @@ urgent it is, detects when several people are reporting the same physical issue,
 and publishes it to a shared public map. Municipal staff reply with a verified
 badge, mark issues resolved, and read an operational dashboard.
 
+An **experimental reporting assistant** guides citizens through the same
+process in a conversation: DeepSeek asks follow-up questions and prepares an
+editable description, then the interface prompts for a photo, GPS or map pin,
+and a public name. Camera capture, voice recording with browser transcription,
+and location controls appear at the relevant step. The citizen reviews the
+report and explicitly submits it through the existing moderation pipeline.
+
 It is an independent community platform. It suggests a responsible service; it
 does not dispatch work and never transmits anything to an authority
 automatically.
@@ -79,7 +86,7 @@ Before deploying: `npm test`, `npm run lint`, `npm run build`.
 | Variable | Required | Purpose |
 |---|---|---|
 | `DATABASE_URL` | yes | Postgres connection string |
-| `DEEPSEEK_API_KEY` | yes | Moderation, classification, vision, duplicate adjudication |
+| `DEEPSEEK_API_KEY` | yes | Experimental chat drafting, moderation, classification, vision, duplicate adjudication |
 | `FEEDBACK_ADMIN_PASSWORD` | yes | Moderation queues and export |
 | `BLOB_READ_WRITE_TOKEN` | for photos | Private Vercel Blob store |
 | `DEMO_MODE` | no | Demonstration only; see below |
@@ -89,17 +96,20 @@ Before deploying: `npm test`, `npm run lint`, `npm run build`.
 
 ## What the AI does
 
-Six model-assisted steps, each with validated output and a human route:
+Seven model-assisted uses, each with validated output and human control:
 
-1. **Moderation** of report and reply text, in any language. Fails closed.
-2. **Photo review**, comparing the image against the report. Only clearly
+1. **Conversational drafting** in the experimental assistant. DeepSeek asks
+   questions about the problem and prepares a factual draft of at most 500
+   characters. The citizen can edit it and must approve the final submission.
+2. **Moderation** of report and reply text, in any language. Fails closed.
+3. **Photo review**, comparing the image against the report. Only clearly
    relevant, safe images auto-approve; everything else waits for a person.
-3. **Routing** to one of eight services from a fixed directory.
-4. **Category** classification, including when the reporter says "I am not sure".
-5. **Severity triage** — advisory only, must cite a reason from a closed list,
+4. **Routing** to one of eight services from a fixed directory.
+5. **Category** classification, including when the reporter says "I am not sure".
+6. **Severity triage** — advisory only, must cite a reason from a closed list,
    with a suggested response window that is fixed policy rather than a model
    output.
-6. **Duplicate detection**, so forty reports of one pothole become one case with
+7. **Duplicate detection**, so forty reports of one pothole become one case with
    forty supporters instead of forty cases.
 
 Duplicate detection is the part worth understanding. Citizens report the same
@@ -116,6 +126,34 @@ immediately on that input. It runs three stages, cheapest first:
 
 Nothing is merged away: a linked report keeps its own row, author and text, and
 a moderator can separate a wrong match.
+
+## Experimental reporting assistant
+
+Open [Report with AI](https://fixpafos.vercel.app/report/chat) or choose it from
+the navigation or standard reporting form. It is available in Greek, English
+and Russian. The flow collects a description, optional photo, confirmed location
+and public name, then shows an editable review before **Submit report**.
+
+`/api/report-chat` uses the existing DeepSeek client, API key and model settings
+for bounded, structured text-only follow-ups. Voice input uses `MediaRecorder`
+for recording/playback and browser `SpeechRecognition` for an editable
+transcript. Browser speech services may process audio remotely, and automatic
+transcription depends on browser support. FixPafos keeps raw recordings in page
+memory; they are not uploaded. DeepSeek sees the text the citizen chooses to
+send, including private drafting conversation text. It does not see the locally
+attached photo during the conversation.
+
+**Open camera**, **Record voice**, **Use GPS** and **Choose on map** are explicit
+user actions; the model cannot operate devices or invent a pin. Camera and
+microphone tracks are released when the controls close, and denied permissions
+have upload, typing or map alternatives. Final submission uses `/api/issues`
+with category `unsure`, preserving text moderation, automatic classification,
+department assignment, severity, duplicates and photo review.
+
+The assistant needs an internet connection. Its conversation and unfinished
+draft are held in page memory and are lost on reload or leaving the page. The
+standard reporting form retains the offline queue. See the
+[chat guide](docs/chat-reporting.md) for the full tutorial and browser limits.
 
 ## Proving it works
 
@@ -139,6 +177,12 @@ Beyond accuracy it reports three things averages hide: **critical under-calls**,
 mark the harder cases. The scoring functions are unit-tested against
 hand-computed values, the runner exits non-zero without an API key, and no
 results are committed, so a figure only exists if someone ran it.
+
+This evaluation measures report classification, routing and severity. It does
+not measure the quality of the experimental assistant's questions or drafts.
+Chat validation tests and a browser journey check its controls, device handling
+and reviewed submission flow; those are functional checks, not an AI accuracy
+benchmark.
 
 ## Insights
 
@@ -168,9 +212,9 @@ map canvas is capped at a 2x pixel ratio on dense mobile screens.
 - **Dictation** in the reader's own language, so a report can be spoken rather
   than typed on a phone outdoors. The transcript is always reviewable and
   editable; it is never submitted automatically.
-- **Offline reporting**: a failed submission is kept on the device, clearly
-  marked *not submitted yet*, and sent when a connection returns. It only leaves
-  the queue once the server has accepted it.
+- **Offline reporting in the standard form**: a failed submission is kept on
+  the device, clearly marked *not submitted yet*, and sent when a connection
+  returns. It only leaves the queue once the server has accepted it.
 - Installable as a PWA. The service worker caches only the application shell and
   deliberately never caches API responses, so the board is never stale.
 - Skip link, semantic markup, visible focus, a table view behind every chart,
@@ -206,11 +250,18 @@ spreadsheet formula.
 ```bash
 node --env-file=.env.local scripts/verify-live.mjs
 node --env-file=.env.local scripts/verify-team-photos.mjs
+node scripts/verify-report-chat.mjs
 ```
 
-These drive real browsers against a running deployment, exercising uploads,
-moderation, team authorization, verified replies and resolution. They create and
-remove only uniquely named fixtures. Set `TEST_BASE_URL` to target a deployment.
+The first two scripts drive real browsers against a running deployment,
+exercising uploads, moderation, team authorization, verified replies and
+resolution. They create and remove only uniquely named fixtures. Set
+`TEST_BASE_URL` to target a deployment.
+
+The chat verification script targets a local server on port 3107 by default
+(`CHAT_VERIFY_URL` overrides it). It uses simulated camera, microphone and GPS
+input, intercepts publication, and saves screenshots without posting fixtures
+to the public map.
 
 ## Attribution
 

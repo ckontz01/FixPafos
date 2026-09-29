@@ -1,13 +1,27 @@
 # FixPafos AI evaluation
 
-This directory holds a labelled dataset and a runner that measure how well the
-platform's AI actually performs. It exists so claims about the system can be
-checked rather than asserted.
+This directory holds a labelled dataset and a runner that measure the report
+classifier's department routing, category and severity decisions. It exists so
+claims about those decisions can be checked rather than asserted.
 
 **Nothing here produces a number without running the model.** The runner calls
 the configured provider for every case and computes metrics from the responses.
 There are no stored or estimated results; a report is only ever written by an
 actual run.
+
+## Scope and the experimental chat assistant
+
+The assistant at `/report/chat` uses the same DeepSeek client to ask follow-up
+questions and prepare an editable report draft. The citizen then adds media and
+a confirmed location, reviews the draft and submits through `/api/issues` with
+category `unsure`. The final report uses the classifier evaluated here.
+
+This dataset does **not** evaluate the assistant's conversational quality,
+factual faithfulness, completeness of questions, browser transcription or device
+compatibility. `tests/report-chat.test.ts` checks bounded input, validated model
+output and provider-failure handling. `scripts/verify-report-chat.mjs` checks
+the browser journey with simulated media/GPS and intercepted publication. Those
+are functional safeguards, not conversational accuracy results.
 
 ## Files
 
