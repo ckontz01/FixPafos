@@ -44,7 +44,8 @@ automatically.
 | Verification | TypeScript tests via `tsx`, Playwright browser checks, ESLint, and a labelled multilingual AI evaluation dataset |
 
 **Moderation pipeline:** report and reply text is screened before publication;
-blocked text is quarantined, and an unavailable model stops publication. Uploaded
+blocked text is quarantined, and unavailable text moderation or classification
+stops normal publication. Uploaded
 photos are auto-approved only when DeepSeek judges them clearly relevant, safe,
 high-confidence and free of visible personal information. All other photos stay
 private for human review. Moderators can also review flagged reports and possible
@@ -109,8 +110,22 @@ Seven model-assisted uses, each with validated output and human control:
 6. **Severity triage** — advisory only, must cite a reason from a closed list,
    with a suggested response window that is fixed policy rather than a model
    output.
-7. **Duplicate detection**, so forty reports of one pothole become one case with
-   forty supporters instead of forty cases.
+7. **Duplicate detection**, linking reports about the same physical defect while
+   preserving each citizen's original report and allowing moderator correction.
+
+These seven purposes use five model-call implementations: conversational
+drafting, text moderation, classification (category, service and severity in
+one response), photo review and duplicate adjudication. Photo review inspects
+normalized pixels after submission and before the report/photo state is saved.
+A failed photo assessment leaves the image private; failed duplicate assessment
+can leave an independent report or a suggestion for a moderator, never a
+confirmed automatic link.
+
+Voice transcription uses the browser's speech service. Camera/GPS are browser
+controls, interface translations are bundled dictionaries, Insights uses
+database aggregates, and verified badges use department authentication. These
+support the AI workflow without being DeepSeek decisions. No custom model
+training, fine-tuning or unmeasured accuracy is claimed.
 
 Duplicate detection is the part worth understanding. Citizens report the same
 pothole in Greek, Greeklish, English and Russian, and a keyword match fails
@@ -234,7 +249,8 @@ map canvas is capped at a 2x pixel ratio on dense mobile screens.
 `DEMO_MODE=true` allows a deterministic keyword classifier to stand in when the
 model provider is unreachable, so a live demonstration survives a bad
 connection. Its output is stamped as a fallback, is always marked for human
-review, and is never presented as a model decision. Leave it unset in
+review, and is never presented as a model decision. This fallback applies only
+to classification; text moderation still must succeed. Leave it unset in
 production, where an unavailable model correctly fails closed.
 
 ## Municipal export

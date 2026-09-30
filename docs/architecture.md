@@ -58,15 +58,17 @@ flowchart TD
     H2 --> H3{Candidates?}
     H3 -->|No| I[Independent case]
     H3 -->|Yes| H4[Model adjudication]
-    H4 -->|high confidence AND close| H5[Linked automatically]
-    H4 -->|otherwise| H6[Suggested, awaits a moderator]
+    H4 -->|high confidence AND strong combined score| H5[Linked automatically]
+    H4 -->|ambiguous eligible match| H6[Suggested, awaits a moderator]
+    H4 -->|no same defect| I
+    H4 -->|unavailable| H7[Deterministic suggestion only<br/>or independent case]
 
     H5 --> I
     H6 --> I
+    H7 --> I
     G2 --> H
-    I --> J[Saved and published]
-
-    J --> K[Photo review<br/>vision check, fails closed to the queue]
+    I --> K[Optional photo review before save<br/>actual pixels; failure leaves photo private]
+    K --> J[Report and photo status saved]
     J --> L[Public board and map]
     J --> M[/insights dashboard/]
     L --> N[Citizens support or flag]
@@ -85,9 +87,23 @@ flowchart TD
 | Department routing | Suggests a service | Low confidence routes to `review`; the service confirms | Production fails closed; `DEMO_MODE` uses a labelled keyword fallback |
 | Category | Sets the published category | Moderator can release with a re-classification | As above |
 | Severity | Advisory triage level only | Always advisory; low confidence marks it for review | As above |
-| Duplicate detection | Links only on high confidence *and* close geometry | Everything else is suggested; moderators can separate | Degrades to a deterministic signal that can only suggest |
+| Duplicate detection | Links only on high confidence and a strong combined score | Eligible ambiguous matches are suggested; moderators can separate | Degrades to a deterministic suggestion or an independent case, never an automatic confirmation |
 
 No AI output is presented as a municipal decision. Nothing is dispatched.
+
+These are seven AI purposes implemented in five model callers:
+`report-chat-ai.ts`, `feedback-moderation.ts`, `assignment.ts` (category,
+department and severity together), `photo-review.ts` and `duplicates.ts`.
+The application uses hosted DeepSeek models; no custom training or fine-tuning
+is claimed. Camera/GPS are browser controls, voice transcription uses the
+browser's speech service, interface translations are bundled text, verified
+badges use department authentication, and Insights uses database aggregates.
+
+Photo review runs in `saveReport` before the report and photo status are stored.
+Blocked report text goes to quarantine and skips automatic photo review.
+An unavailable photo model leaves the image pending privately; an unavailable
+duplicate model never auto-confirms a link and does not prevent an otherwise
+valid report from being published.
 
 ## Experimental conversational reporting
 

@@ -26,7 +26,7 @@ evaluation labels and submission materials.
 | Which service is responsible | Suggestion only | Low confidence is forced to `review`; the department confirms; nothing is dispatched |
 | Issue category | Yes, sets it | Rejected unless it is one of eight fixed identifiers |
 | Severity | Advisory only | Must cite at least one factor from a closed list or it is rejected; the response window is a fixed policy mapping, not a model output |
-| Duplicate link | Only when confident **and** close | Everything else is suggested and waits for a moderator, who can also separate a wrong link |
+| Duplicate link | Only with high model confidence and a strong combined score | Eligible ambiguous matches wait for a moderator; independent reports stay separate and a moderator can undo a wrong link |
 
 **No automated decision produces a legal or official effect.** The platform
 suggests; the municipality decides. Every AI-derived value shown to a citizen is
